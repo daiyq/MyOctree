@@ -11,7 +11,8 @@
 using std::vector;
 
 
-typedef struct { 
+typedef struct 
+{ 
 	float x;
 	float y;
 	bool isExisted;
@@ -20,7 +21,8 @@ typedef struct {
 //define Node
 typedef struct OctreeNode Node;
 
-struct OctreeNode {
+struct OctreeNode 
+{
 	float points[8][3];
 	Node* child_node[8];
 	vector<size_t> vec_num_triangle;
