@@ -1,6 +1,7 @@
 #ifndef READ_PLY_H_
 #define READ_PLY_H_
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>//fopen
 #include <string.h>//strcmp
 #include <math.h>
@@ -153,7 +154,7 @@ void readPly(char* fname, VerArray& ver_array, Size& size)
 	{
 		for (size_t i = 0; i < num_vertex; ++i)
 		{
-			int haveread = 0;
+			size_t haveread = 0;
 			if ((haveread = fread(&(ver_array.vec_vertex[3 * i]), sizeof(float), 3, fin)) != 3)
 			{
 				printf("Read Error");

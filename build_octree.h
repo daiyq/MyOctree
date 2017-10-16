@@ -1,11 +1,10 @@
 #ifndef BUILD_OCTREE_H_
 #define BUILD_OCTREE_H_
 
-
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
+//#include <cstdio>
+//#include <cstring>
+//#include <cmath>
+//#include <cstdlib>
 #include <vector>
 
 using std::vector;
@@ -107,7 +106,7 @@ Point crossedPoint(float (&tri_point1)[2], float (&tri_point2)[2], float (&squar
 		state = 0;
 	else if ((square_point1[0] == square_point2[0]) && (tri_point1[0] != tri_point2[0])) //正方形直线没有斜率，三角形的直线有
 		state = 1;
-	else if ((square_point1[1] == square_point2[1]) && (tri_point1[0] == tri_point2[0])) //正方形有，三角形直线没有
+	else if ((square_point1[1] == square_point2[1]) && (tri_point1[0] == tri_point2[0])) //正方形有,斜率为0，三角形直线没有
 		state = 2;
 	 else if ((square_point1[1] == square_point2[1]) && (tri_point1[0] != tri_point2[0])) //均有斜率
 		state = 3;
@@ -124,7 +123,7 @@ Point crossedPoint(float (&tri_point1)[2], float (&tri_point2)[2], float (&squar
 		{
 			p.x = tri_point1[0];
 			p.y = Min(tri_point1[1], tri_point2[1]);
-			p.isExisted = true; //两线段共线
+			p.isExisted = true; //两线段共线相交
 			return p;
 		}
 		else 
@@ -144,12 +143,35 @@ Point crossedPoint(float (&tri_point1)[2], float (&tri_point2)[2], float (&squar
 		p.isExisted = true;
 		return p;
 	case 3:
-		p.y = square_point1[1];
-		p.x = (p.y - tri_point1[1])*(tri_point2[0] - tri_point1[0]) / (tri_point2[1] - tri_point1[1]) + tri_point1[0];
-		p.isExisted = true;
-		return p;
+		if ((tri_point1[1] == tri_point2[1])  )
+		{
+			if ((tri_point1[1] == square_point1[1]) && (Min(tri_point1[0], tri_point2[0]) < Max(square_point1[0], square_point2[0])) && (Min(tri_point1[0], tri_point2[0]) > Min(square_point1[0], square_point2[0])))
+			{
+				
+					p.y = tri_point1[1];
+					p.x = Min(tri_point1[0], tri_point2[0]);
+					p.isExisted = true; //两线段共线相交
+					return p;			
+			}
+			else
+			{
+				p.x = p.y = 0;
+				p.isExisted = false; //两平行线，无交点
+				return p;
+			}		
+		}
+		else
+		{
+			p.y = square_point1[1];
+			p.x = (p.y - tri_point1[1])*(tri_point2[0] - tri_point1[0]) / (tri_point2[1] - tri_point1[1]) + tri_point1[0];
+			p.isExisted = true;
+			return p;
+		}
+
 	default:
-		break;
+		p.x = p.y = 0;
+		p.isExisted = false; //两平行线，无交点
+		return p;
 	}
 }
 
@@ -392,20 +414,22 @@ void produceChildNode(Node &node, VerArray &ver)
 	TODO:when to stop	
 	*/
 	//test 
-	
+	//should be adjusted
+	/*
 	if (node.vec_num_triangle.size() < 4)
 	{
-		//TODO:make child null
-		for (size_t i = 0; i<8; ++i)
-		{
-			node.child_node[i] = nullptr;
-		}
-		return;
+	//TODO:make child null
+	for (size_t i = 0; i<8; ++i)
+	{
+	node.child_node[i] = nullptr;
 	}
+	return;
+	}
+	*/
 	
 	//无三角形或者只有一个三角形
 	//条件太过苛刻
-	/*
+	
 	if((node.vec_num_triangle.size() == 0) || (node.vec_num_triangle.size() == 1))
 	{
 	//TODO:make child null
@@ -415,7 +439,7 @@ void produceChildNode(Node &node, VerArray &ver)
 	}
 	return;
 	}
-	*/
+	
 	
 	//共顶点
 	for(size_t i = 0; i < 3; ++i)
@@ -455,7 +479,8 @@ void produceChildNode(Node &node, VerArray &ver)
 		crossProductOfFace(&ver.vec_vertex[3 * ver.vec_vertex_of_face[3*node.vec_num_triangle[i]]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3*node.vec_num_triangle[i]+1]], &ver.vec_vertex[3*ver.vec_vertex_of_face[3*node.vec_num_triangle[i]+2]], vector_of_face_2);
 		float cos_=pointProduct(vector_of_face_1,vector_of_face_2)/(sqrt(pow(vector_of_face_1[0],2)+pow(vector_of_face_1[1],2)+pow(vector_of_face_1[2],2))*sqrt(pow(vector_of_face_2[0],2)+pow(vector_of_face_2[1],2)+pow(vector_of_face_2[2],2)));
 		float cos_abs=abs(cos_);
-		if(cos_abs<0.95) break;
+		//should ba adjusted
+		if(cos_abs<0.98) break;
 		++count_cos_;
 	}
 	if(count_cos_ == node.vec_num_triangle.size()-1) 
@@ -472,11 +497,12 @@ void produceChildNode(Node &node, VerArray &ver)
 	//排除掉上面不用切分的情况，切分开始
 
 	//allocate memory of childNode
+
 	for(size_t i=0;i<8;++i)
 	{
 		node.child_node[i] = new Node;
 	}
-
+	
 
 	float half_length_of_side = (node.points[1][0] - node.points[0][0]) / 2;//正方体边长一半
 
@@ -529,8 +555,8 @@ void produceChildNode(Node &node, VerArray &ver)
 		(node.child_node[i])->points[7][1] = ((node.child_node[i]))->points[0][1] + half_length_of_side;
 		(node.child_node[i])->points[7][2] = ((node.child_node[i]))->points[0][2] + half_length_of_side;
 	}	
-	//for(auto j : node.vec_num_triangle){
-	//for(auto j = node.vec_num_triangle.begin(); j != node.vec_num_triangle.end(); ++j)
+	
+
 	for(size_t j = 0; j< node.vec_num_triangle.size(); ++j)
 	{
 		float tri[3][3];
@@ -547,7 +573,7 @@ void produceChildNode(Node &node, VerArray &ver)
 			if (projection(tri, node.child_node[k]->points))
 			{
 				(node.child_node[k])->vec_num_triangle.push_back(node.vec_num_triangle[j]);
-				break;
+				//break;
 			}									
 		}	
 	}

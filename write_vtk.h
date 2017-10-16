@@ -1,6 +1,9 @@
 #ifndef WRITE_VTK_H_
 #define WRITE_VTK_H_
+
+#define _CRT_SECURE_NO_WARNINGS
 #include <map>
+#include <stdio.h>
 
 using std::map;
 
@@ -44,7 +47,7 @@ int inPointsArray(float point[3], vector<float>& vec_vertex)
 	for (size_t i = 0; i < vec_vertex.size() / 3; ++i)
 	{
 		if ((point[0] == vec_vertex[3 * i]) && (point[1] == vec_vertex[3 * i + 1]) && (point[2] == vec_vertex[3 * i + 2]))
-			return i;
+			return static_cast<int>(i);
 	}
 	return -1;
 }
@@ -59,7 +62,7 @@ void writeOut(char* fname, Record& record)
 	fprintf(fout, "ASCII\n");
 	fprintf(fout, "DATASET UNSTRUCTURED_GRID\n");
 
-	int num_of_vertex = record.vec_point.size() / 3;
+	int num_of_vertex = static_cast<int>(record.vec_point.size() / 3);
 	fprintf(fout, "POINTS %d float\n", num_of_vertex);
 
 	for (size_t i = 0; i < num_of_vertex; ++i)
@@ -75,7 +78,7 @@ void writeOut(char* fname, Record& record)
 
 
 
-	int num_of_cell = record.vec_face.size() / 8;
+	int num_of_cell = static_cast<int>(record.vec_face.size() / 8);
 	fprintf(fout, "CELLS %d %d\n", num_of_cell, 9 * num_of_cell);
 
 	for (size_t i = 0; i < num_of_cell; ++i)
@@ -105,10 +108,13 @@ void writeOut(char* fname, Record& record)
 
 void writeRecord(Node* node, Record& record)
 {
+	/*
 	if (node->vec_num_triangle.size() == 0)
 	{
-		return;
+	return;
 	}
+	*/
+	
 
 	int marked = 0;
 	for (size_t i = 0; i < 8; ++i)
@@ -130,7 +136,7 @@ void writeRecord(Node* node, Record& record)
 		for (size_t i = 0; i < 8; ++i)
 		{
 			//int result = inPointsArray(node->points[i], record.vec_point);
-			int before = record.point.size();
+			int before = static_cast<int>(record.point.size());
 			Point3d p;
 			p.p1 = node->points[i][0];
 			p.p2 = node->points[i][1];
@@ -141,7 +147,7 @@ void writeRecord(Node* node, Record& record)
 			{
 				record.point[p] = before;
 
-				record.vec_face.push_back(record.vec_point.size() / 3);
+				record.vec_face.push_back(static_cast<int>(record.vec_point.size() / 3));
 
 				record.vec_point.push_back(node->points[i][0]);
 				record.vec_point.push_back(node->points[i][1]);

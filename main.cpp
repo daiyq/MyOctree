@@ -7,7 +7,7 @@ int main(int args, char* argv[])
 {
 	if(args!=3)
 	{
-		printf("Projection program need 3 parameters.\n");
+	    printf("Projection program need 3 parameters.\n");
 		printf("Projection: projection.\n");
 		printf("input_file: .ply.\n");
 		printf("output_file: .txt.\n");
