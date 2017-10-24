@@ -410,42 +410,22 @@ void crossProductOfFace(float point1[3], float point2[3], float point3[3], float
 
 void produceChildNode(Node &node, VerArray &ver)
 {
-	/*
-	TODO:when to stop	
-	*/
-	//test 
-	//should be adjusted
-	/*
-	if (node.vec_num_triangle.size() < 4)
-	{
-	//TODO:make child null
-	for (size_t i = 0; i<8; ++i)
-	{
-	node.child_node[i] = nullptr;
-	}
-	return;
-	}
-	*/
-	
 	//无三角形或者只有一个三角形
-	//条件太过苛刻
-	
-	if((node.vec_num_triangle.size() == 0) || (node.vec_num_triangle.size() == 1))
+	if ((node.vec_num_triangle.size() == 0) || (node.vec_num_triangle.size() == 1))
 	{
-	//TODO:make child null
-	for(size_t i=0;i<8;++i)
-	{
-	node.child_node[i] = nullptr;
+		//TODO:make child null
+		for (size_t i = 0; i < 8; ++i)
+		{
+			node.child_node[i] = nullptr;
+		}
+		return;
 	}
-	return;
-	}
-	
-	
+
 	//共顶点
-	for(size_t i = 0; i < 3; ++i)
+	for (size_t i = 0; i < 3; ++i)
 	{
 		int marked_in = 0;
-		for(size_t j = 1; j < node.vec_num_triangle.size(); ++j)
+		for (size_t j = 1; j < node.vec_num_triangle.size(); ++j)
 		{
 			//if(!pointOfTriangle(g_triangle[node.vec_num_triangle[0]][i], g_triangle[node.vec_num_triangle[j]]))
 			if (pointOfTriangle(&ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[0] + i]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[j] + 0]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[j] + 1]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[j] + 2]]))
@@ -455,57 +435,64 @@ void produceChildNode(Node &node, VerArray &ver)
 			else
 			{
 				break;
-			}												    
+			}
 		}
 		//TODO:make child null
 		if (marked_in == node.vec_num_triangle.size() - 1)
 		{
-			for (size_t i = 0; i<8; ++i)
+			for (size_t i = 0; i < 8; ++i)
 			{
 				node.child_node[i] = nullptr;
 			}
 			return;
-		}		
-	}		
+		}
+	}
+
 	//方向相近??
 	float vector_of_face_1[3];
 	//crossProductOfFace(g_triangle[node.vec_num_triangle[0]][0],g_triangle[node.vec_num_triangle[0]][1],g_triangle[node.vec_num_triangle[0]][2],vector_of_face_1);
-	crossProductOfFace(&ver.vec_vertex[3 * ver.vec_vertex_of_face[3*node.vec_num_triangle[0]]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3*node.vec_num_triangle[0]+1]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3*node.vec_num_triangle[0]+2]], vector_of_face_1);
+	crossProductOfFace(&ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[0]]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[0] + 1]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[0] + 2]], vector_of_face_1);
 	float vector_of_face_2[3];
-	int count_cos_=0;
-	for(size_t i = 1; i < node.vec_num_triangle.size(); ++i)
+	int count_cos_ = 0;
+	for (size_t i = 1; i < node.vec_num_triangle.size(); ++i)
 	{
 		//crossProductOfFace(g_triangle[node.vec_num_triangle[i]][0],g_triangle[node.vec_num_triangle[i]][1],g_triangle[node.vec_num_triangle[i]][2],vector_of_face_2);
-		crossProductOfFace(&ver.vec_vertex[3 * ver.vec_vertex_of_face[3*node.vec_num_triangle[i]]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3*node.vec_num_triangle[i]+1]], &ver.vec_vertex[3*ver.vec_vertex_of_face[3*node.vec_num_triangle[i]+2]], vector_of_face_2);
-		float cos_=pointProduct(vector_of_face_1,vector_of_face_2)/(sqrt(pow(vector_of_face_1[0],2)+pow(vector_of_face_1[1],2)+pow(vector_of_face_1[2],2))*sqrt(pow(vector_of_face_2[0],2)+pow(vector_of_face_2[1],2)+pow(vector_of_face_2[2],2)));
-		float cos_abs=abs(cos_);
+		crossProductOfFace(&ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[i]]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[i] + 1]], &ver.vec_vertex[3 * ver.vec_vertex_of_face[3 * node.vec_num_triangle[i] + 2]], vector_of_face_2);
+		float cos_ = pointProduct(vector_of_face_1, vector_of_face_2) / (sqrt(pow(vector_of_face_1[0], 2) + pow(vector_of_face_1[1], 2) + pow(vector_of_face_1[2], 2))*sqrt(pow(vector_of_face_2[0], 2) + pow(vector_of_face_2[1], 2) + pow(vector_of_face_2[2], 2)));
+		float cos_abs = abs(cos_);
 		//should ba adjusted
-		if(cos_abs<0.98) break;
+		if (cos_abs < 0.98) break;
 		++count_cos_;
 	}
-	if(count_cos_ == node.vec_num_triangle.size()-1) 
+	if (count_cos_ == node.vec_num_triangle.size() - 1)
 	{
 		//TODO:make child null
-		for(size_t i=0;i<8;++i)
+		for (size_t i = 0; i < 8; ++i)
 		{
 			node.child_node[i] = nullptr;
 		}
 		return;
 	}
 
-
 	//排除掉上面不用切分的情况，切分开始
-
 	//allocate memory of childNode
 
+	float half_length_of_side = (node.points[1][0] - node.points[0][0]) / 2;//正方体边长一半
+	/*
+	if (half_length_of_side < 0.1) {
+		for (size_t i = 0; i < 8; ++i)
+			{
+				node.child_node[i] = nullptr;
+			}
+		return;
+	}
+	*/
+	
 	for(size_t i=0;i<8;++i)
 	{
 		node.child_node[i] = new Node;
 	}
 	
-
-	float half_length_of_side = (node.points[1][0] - node.points[0][0]) / 2;//正方体边长一半
-
 	(node.child_node[0])->points[0][0] = node.points[0][0];
 	(node.child_node[0])->points[0][1] = node.points[0][1];
 	(node.child_node[0])->points[0][2] = node.points[0][2]; // 0
@@ -556,7 +543,6 @@ void produceChildNode(Node &node, VerArray &ver)
 		(node.child_node[i])->points[7][2] = ((node.child_node[i]))->points[0][2] + half_length_of_side;
 	}	
 	
-
 	for(size_t j = 0; j< node.vec_num_triangle.size(); ++j)
 	{
 		float tri[3][3];
@@ -578,13 +564,11 @@ void produceChildNode(Node &node, VerArray &ver)
 		}	
 	}
 
-
 	for(size_t i = 0; i < 8; ++i)
 	{
 		produceChildNode(*(node.child_node[i]), ver);
 	}
-	
-	
+		
 }
 
 //Recursive practice, there is a problem with the replication of Node
@@ -644,6 +628,8 @@ void buildOctree(Node& origin_node, VerArray& ver, Size& size)
 
 	produceChildNode(origin_node, ver);
 	//buildOctree(origin_node, ver);
+
+	
 }
 
 #endif
