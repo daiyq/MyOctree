@@ -408,8 +408,15 @@ void crossProductOfFace(float point1[3], float point2[3], float point3[3], float
 	crossProduct(vector_side1, vector_side2, vector_of_face);
 }
 
-void produceChildNode(Node &node, VerArray &ver)
+void produceChildNode(Node &node, VerArray &ver, vector<size_t>* pv, Size& s)
 {
+	if (pv->size() != 0) {
+		for (size_t i = 0; i < 8; ++i)
+		{
+			node.child_node[i] = nullptr;
+		}
+		return;
+	}
 	//无三角形或者只有一个三角形
 	if ((node.vec_num_triangle.size() == 0) || (node.vec_num_triangle.size() == 1))
 	{
@@ -478,16 +485,15 @@ void produceChildNode(Node &node, VerArray &ver)
 	//allocate memory of childNode
 
 	float half_length_of_side = (node.points[1][0] - node.points[0][0]) / 2;//正方体边长一半
-	/*
-	if (half_length_of_side < 0.1) {
+	
+	if (half_length_of_side < s.len/(2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2)) {
 		for (size_t i = 0; i < 8; ++i)
-			{
-				node.child_node[i] = nullptr;
-			}
+		{
+			node.child_node[i] = nullptr;
+		}
 		return;
 	}
-	*/
-	
+
 	for(size_t i=0;i<8;++i)
 	{
 		node.child_node[i] = new Node;
@@ -564,9 +570,23 @@ void produceChildNode(Node &node, VerArray &ver)
 		}	
 	}
 
+	//判断是否出现异常情况
+	if (node.vec_num_triangle.size() == node.child_node[0]->vec_num_triangle.size() &&
+		node.vec_num_triangle.size() == node.child_node[1]->vec_num_triangle.size() &&
+		node.vec_num_triangle.size() == node.child_node[2]->vec_num_triangle.size() &&
+		node.vec_num_triangle.size() == node.child_node[3]->vec_num_triangle.size() &&
+		node.vec_num_triangle.size() == node.child_node[4]->vec_num_triangle.size() &&
+		node.vec_num_triangle.size() == node.child_node[5]->vec_num_triangle.size() &&
+		node.vec_num_triangle.size() == node.child_node[6]->vec_num_triangle.size() &&
+		node.vec_num_triangle.size() == node.child_node[7]->vec_num_triangle.size()
+		) {
+		*pv = node.vec_num_triangle;
+
+	}
+
 	for(size_t i = 0; i < 8; ++i)
 	{
-		produceChildNode(*(node.child_node[i]), ver);
+		produceChildNode(*(node.child_node[i]), ver, pv, s);
 	}
 		
 }
@@ -596,7 +616,7 @@ node_stack.push(*(t.child_node[i]));
 */
 
 
-void buildOctree(Node& origin_node, VerArray& ver, Size& size)
+void buildOctree(Node& origin_node, VerArray& ver, Size& size, vector<size_t>* pv)
 {
 	origin_node.points[0][0] = size.min[0];
 	origin_node.points[0][1] = size.min[1];
@@ -626,10 +646,9 @@ void buildOctree(Node& origin_node, VerArray& ver, Size& size)
 	for(int i = 0; i < num_face; ++i)
 		origin_node.vec_num_triangle.push_back(i);
 
-	produceChildNode(origin_node, ver);
+	produceChildNode(origin_node, ver, pv, size);
 	//buildOctree(origin_node, ver);
 
-	
 }
 
 #endif

@@ -75,9 +75,6 @@ void writeOut(char* fname, Record& record)
 		fprintf(fout, "\n");
 	}
 
-
-
-
 	int num_of_cell = static_cast<int>(record.vec_face.size() / 8);
 	fprintf(fout, "CELLS %d %d\n", num_of_cell, 9 * num_of_cell);
 
@@ -96,11 +93,9 @@ void writeOut(char* fname, Record& record)
 		fprintf(fout, "\n");
 	}
 
-
 	fprintf(fout, "CELL_types %d\n", num_of_cell);
 	for (size_t i = 0; i < num_of_cell; ++i)
 	{
-
 		fprintf(fout, "12\n");
 	}
 
@@ -142,7 +137,6 @@ void writeRecord(Node* node, Record& record)
 			p.p2 = node->points[i][1];
 			p.p3 = node->points[i][2];
 			
-
 			if (record.point.find(p) == record.point.end())
 			{
 				record.point[p] = before;
