@@ -2,6 +2,9 @@
 #include <cstdio> //fopen, fclose, printf, fread, sscanf
 #include <cstring> //strtok, 
 #include <cmath>
+#include <map>
+#include <vector>
+
 
 //read .stl file
 float max(float t1, float t2) {
@@ -463,15 +466,133 @@ void build(Node* n, std::vector<float>* record, Size* s) {
 }
 
 //output in vtk
+typedef struct {
+	float x;
+	float y;
+	float z;
+}Point;
+
+typedef struct {
+	int numbering;
+	float distance;
+}Value;
+
+bool operator<(const Point& lhs, const Point& rhs) {
+	if (lhs.x < rhs.x)
+		return false;
+	else if (lhs.x > rhs.x)
+		return true;
+	else if (lhs.y < rhs.y)
+		return false;
+	else if (lhs.y > rhs.y)
+		return true;
+	else if (lhs.z < rhs.z)
+		return false;
+	else if (lhs.z > rhs.z)
+		return true;
+
+	return false;
+}
+
+
+typedef std::vector<float> vec_point;
+typedef std::vector<int> vec_element;
+typedef std::map<Point, Value> point_container;
+
+void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* ppoint, vec_element* pelement) {
+	if (pcontainer->find(p) != pcontainer->end()) {
+		pelement->push_back(((*pcontainer)[p]).numbering);
+	}
+	else {
+		int size = static_cast<int>(pcontainer->size());
+		Value v;
+		v.numbering = size + 1;
+		//calcute the distance using bb_tree
+
+		(*pcontainer)[p] = v;
+		ppoint->push_back(p.x);
+		ppoint->push_back(p.y);
+		ppoint->push_back(p.z);
+		//the distance come from bb_tree
+
+		pelement->push_back(v.numbering);
+	}
+}
+
+void traverse(Node* n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement) {
+	if (n->child[0] == nullptr) {
+		Point p;
+		//first point
+		p.x = n->points[0];
+		p.y = n->points[1];
+		p.z = n->points[2];
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		//second point,
+		p.x += n->len;//2
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		p.y += n->len;//3
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		p.x -= n->len;//4
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		p.y -= n->len;//5
+		p.z += n->len;
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		p.x += n->len;//6
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		p.y += n->len;//7
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		p.x -= n->len;//8
+		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		
+	}
+	traverse(n->child[0], pcontainer, ppoint, pelement);
+	traverse(n->child[1], pcontainer, ppoint, pelement);
+	traverse(n->child[2], pcontainer, ppoint, pelement);
+	traverse(n->child[3], pcontainer, ppoint, pelement);
+	traverse(n->child[4], pcontainer, ppoint, pelement);
+	traverse(n->child[5], pcontainer, ppoint, pelement);
+	traverse(n->child[6], pcontainer, ppoint, pelement);
+	traverse(n->child[7], pcontainer, ppoint, pelement);
+}
+
 void write_vtk(char* filename, Node* n) {
 	FILE* fout = std::fopen(filename, "w");
 	if (!fout)
 		std::printf("cann't creat file %s/n", filename);
 
+	point_container container;
+	vec_point point;
+	vec_element element;
+	traverse(n, &container, &point, &element);
+
+	std::fprintf(fout, "TITLE=\"finite element grid\"\n");
+	std::fprintf(fout, "VARIABLES=\"X\", \"X\", \"Z\", \"DISTANCE\" \n");
+	int number_of_point = static_cast<int>(point.size()) / 3;
+	int number_of_element = static_cast<int>(element.size()) / 8;
+	std::fprintf(fout, "ZONE NODE=%d ELEMENT=%d DATAPACKING=POINT, ZONETYPE=FEBRICK\n", number_of_point, number_of_element);
+
+	for (int i = 0; i < number_of_point; i++) {
+		std::fprintf(fout, "%f %f %f\n", point[3 * i], point[3 * i + 1], point[3 * i + 2]);
+	}
+	for (int i = 0; i < number_of_element; i++) {
+		std::fprintf(fout, "%d %d %d %d %d %d %d %d\n", element[8 * i], element[8 * i + 1], element[8 * i + 2], element[8 * i + 3], element[8 * i + 4], element[8 * i + 5], element[8 * i + 6], element[8 * i + 7]);
+	}
 
 	std::fclose(fout);
 }
 
 void free(Node* n) {
+	if (n->child[0] == nullptr) {
+		delete n;
+		return;
+	}
 
+	free(n->child[0]);
+	free(n->child[1]);
+	free(n->child[2]);
+	free(n->child[3]);
+	free(n->child[4]);
+	free(n->child[5]);
+	free(n->child[6]);
+	free(n->child[7]);
 }
