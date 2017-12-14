@@ -1,11 +1,13 @@
 //#include <string.h>
-#include "read_ply.h"
-#include "build_octree.h"
-#include "write_vtk.h"
+//#include "read_ply.h"
+//#include "build_octree.h"
+//#include "write_vtk.h"
+#include "mesh.h"
 
 
 int main(int args, char* argv[])
 {
+	/*
 	if(args!=4)
 	{
 	    printf("Projection program need 3 parameters.\n");
@@ -59,5 +61,16 @@ int main(int args, char* argv[])
 	writeOut(fout, record);
 
 	freeOctree(origin_node);
+	*/
 
+	Size s;
+	std::vector<float> record;
+	read_stl(argv[1], true, &record, &s);
+
+	Node n;
+	build(&n, &record, &s);
+
+	write_tecplot(argv[2], &n);
+
+	free(&n);
 }
