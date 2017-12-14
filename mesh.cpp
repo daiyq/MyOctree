@@ -55,7 +55,7 @@ float min(float t1, float t2, float t3, float t4) {
 	return t4;
 }
 
-void compare(float triangle[3], Size* s) {
+void compare_point(float triangle[3], Size* s) {
 	for (size_t i = 0; i < 3; i++) {
 		if (s->min[i] > triangle[i])
 			s->min[i] = triangle[i];
@@ -66,7 +66,7 @@ void compare(float triangle[3], Size* s) {
 	}
 }
 
-void compare(float triangle[9], Size* s) {
+void compare_triangle(float triangle[9], Size* s) {
 	for (size_t i = 0; i < 3; i++) {
 		if (s->min[i] > min(triangle[i], triangle[i + 3], triangle[i + 6]))
 			s->min[i] = min(triangle[i], triangle[i + 3], triangle[i + 6]);
@@ -92,14 +92,15 @@ void read_stl_ascii(char* filename, std::vector<float>* record, Size* s) {
 
 		char* token = std::strtok(line, seps);
 
-		if (std::strcmp(token, "solid"))
+		if (!std::strcmp(token, "solid")) {
 			continue;
-		if (std::strcmp(token, "endsolid"))
+		}
+		else if (!std::strcmp(token, "endsolid")) {
 			break;
-
-		if (std::strcmp(token, "facet")) {
+		}
+		else if (!std::strcmp(token, "facet")) {
 			token = std::strtok(NULL, seps);
-			if (std::strcmp(token, "normal")) {
+			if (!std::strcmp(token, "normal")) {
 				//store 
 				for (size_t i = 0; i < 3; i++) {
 					token = std::strtok(NULL, seps);
@@ -110,22 +111,22 @@ void read_stl_ascii(char* filename, std::vector<float>* record, Size* s) {
 				}
 			}
 		}
-		if (std::strcmp(token, "endfacet"))
+		else if (!std::strcmp(token, "endfacet")) {
 			continue;
-
-		if (std::strcmp(token, "outer")) {
+		}
+		else if (!std::strcmp(token, "outer")) {
 			/*
 			token = std::strtok(NULL, seps);
 			if (std::strcmp(token, "loop")) {
-				continue;
+			continue;
 			}
 			*/
 			continue;
 		}
-		if (std::strcmp(token, "endloop"))
+		else if (!std::strcmp(token, "endloop")) {
 			continue;
-
-		if (std::strcmp(token, "vertex")) {
+		}
+		else if (!std::strcmp(token, "vertex")) {
 			//store 
 			for (size_t i = 0; i < 3; i++) {
 				token = std::strtok(NULL, seps);
@@ -140,10 +141,11 @@ void read_stl_ascii(char* filename, std::vector<float>* record, Size* s) {
 				s->min[2] = s->max[2] = vertex[2];
 				is_initilize = true;
 			}
-			compare(vertex, s);
+			compare_point(vertex, s);
 		}
-	}
 
+		}//while
+		
 	std::fclose(fin);
 }
 
@@ -175,7 +177,7 @@ void read_stl_binary(char* filename, std::vector<float>* record, Size* s) {
 			s->max[2] = max(vertex[12 * i + 5], vertex[12 * i + 8], vertex[12 * i + 11]);
 			is_initilize = true;
 		}
-		compare(&vertex[12 * i + 3], s);
+		compare_triangle(&vertex[12 * i + 3], s);
 	}
 
 	std::fclose(fin);
@@ -497,25 +499,25 @@ bool operator<(const Point& lhs, const Point& rhs) {
 
 typedef std::vector<float> vec_point;
 typedef std::vector<int> vec_element;
-typedef std::map<Point, Value> point_container;
+typedef std::map<Point, int> point_container;
 
 void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* ppoint, vec_element* pelement) {
 	if (pcontainer->find(p) != pcontainer->end()) {
-		pelement->push_back(((*pcontainer)[p]).numbering);
+		pelement->push_back((*pcontainer)[p]);
 	}
 	else {
 		int size = static_cast<int>(pcontainer->size());
-		Value v;
-		v.numbering = size + 1;
+		//Value v;
+		//v.numbering = size + 1;
 		//calcute the distance using bb_tree
 
-		(*pcontainer)[p] = v;
+		(*pcontainer)[p] = size + 1;
 		ppoint->push_back(p.x);
 		ppoint->push_back(p.y);
 		ppoint->push_back(p.z);
 		//the distance come from bb_tree
 
-		pelement->push_back(v.numbering);
+		pelement->push_back(size + 1);
 	}
 }
 
@@ -544,6 +546,7 @@ void traverse(Node* n, point_container* pcontainer, vec_point* ppoint, vec_eleme
 		p.x -= n->len;//8
 		insert_point_and_element(p, pcontainer, ppoint, pelement);
 		
+		return;
 	}
 	traverse(n->child[0], pcontainer, ppoint, pelement);
 	traverse(n->child[1], pcontainer, ppoint, pelement);
@@ -555,7 +558,7 @@ void traverse(Node* n, point_container* pcontainer, vec_point* ppoint, vec_eleme
 	traverse(n->child[7], pcontainer, ppoint, pelement);
 }
 
-void write_vtk(char* filename, Node* n) {
+void write_tecplot(char* filename, Node* n) {
 	FILE* fout = std::fopen(filename, "w");
 	if (!fout)
 		std::printf("cann't creat file %s/n", filename);
