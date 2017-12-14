@@ -92,10 +92,10 @@ void read_stl_ascii(char* filename, std::vector<float>* record, Size* s) {
 
 		char* token = std::strtok(line, seps);
 
-		if (!std::strcmp(token, "solid")) {
+		if (!std::strcmp(token, "soild")) {
 			continue;
 		}
-		else if (!std::strcmp(token, "endsolid")) {
+		else if (!std::strcmp(token, "endsoild")) {
 			break;
 		}
 		else if (!std::strcmp(token, "facet")) {
@@ -203,7 +203,7 @@ bool has_public_point(float p1[12], float p2[12]) {
 
 size_t count_public_point(Node* n, std::vector<float>* record) {
 	size_t count = 0;
-	for (size_t i = 1; i < record->size() / 12; i++) {
+	for (size_t i = 1; i < n->count.size(); i++) {
 		if (has_public_point(&((*record)[n->count[0]]), &((*record)[12 * n->count[i]])))
 			count++;
 	}
