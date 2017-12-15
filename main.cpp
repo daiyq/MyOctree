@@ -63,6 +63,11 @@ int main(int args, char* argv[])
 	freeOctree(origin_node);
 	*/
 
+	std::printf("number of parameters: %d\n", args);
+	for (int i = 0; i < args; i++) {
+		std::printf("%s\n", argv[i]);
+	}
+
 	Size s;
 	std::vector<float> record;
 	read_stl(argv[1], true, &record, &s);
