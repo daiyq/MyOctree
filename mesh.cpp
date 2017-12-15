@@ -569,10 +569,11 @@ void write_tecplot(char* filename, Node* n) {
 	traverse(n, &container, &point, &element);
 
 	std::fprintf(fout, "TITLE=\"finite element grid\"\n");
-	std::fprintf(fout, "VARIABLES=\"X\", \"X\", \"Z\", \"DISTANCE\" \n");
+	std::fprintf(fout, "VARIABLES=\'X\', \'Y\', \'Z\'\n");
+	//std::fprintf(fout, "VARIABLES=\"X\", \"Y\", \"Z\", \"DISTANCE\" \n");
 	int number_of_point = static_cast<int>(point.size()) / 3;
 	int number_of_element = static_cast<int>(element.size()) / 8;
-	std::fprintf(fout, "ZONE NODE=%d ELEMENT=%d DATAPACKING=POINT, ZONETYPE=FEBRICK\n", number_of_point, number_of_element);
+	std::fprintf(fout, "ZONE N=%d E=%d F=FEPOINT, ET=BRICK\n", number_of_point, number_of_element);
 
 	for (int i = 0; i < number_of_point; i++) {
 		std::fprintf(fout, "%f %f %f\n", point[3 * i], point[3 * i + 1], point[3 * i + 2]);
