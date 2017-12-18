@@ -2,6 +2,12 @@
 //#include "read_ply.h"
 //#include "build_octree.h"
 //#include "write_vtk.h"
+
+
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 #include "mesh.h"
 
 
@@ -62,7 +68,11 @@ int main(int args, char* argv[])
 
 	freeOctree(origin_node);
 	*/
+	Node* tmp = new Node;
+	tmp->child[0] = new Node;
 
+	delete tmp->child[0];
+	delete tmp;
 	std::printf("number of parameters: %d\n", args);
 	for (int i = 0; i < args; i++) {
 		std::printf("%s\n", argv[i]);
@@ -70,12 +80,18 @@ int main(int args, char* argv[])
 
 	Size s;
 	std::vector<float> record;
-	read_stl(argv[1], true, &record, &s);
+	//read_stl(argv[1], true, &record, &s);
 
 	Node n;
-	build(&n, &record, &s);
+	//build(&n, &record, &s);
 
-	write_tecplot(argv[2], &n);
+	//write_tecplot(argv[2], &n);
 
-	free(&n);
+	
+
+
+	//free_node(&n);
+
+	_CrtDumpMemoryLeaks();
+	return 0;
 }

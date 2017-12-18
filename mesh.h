@@ -8,6 +8,8 @@ struct Size {
 };
 void read_stl(char* filename, bool is_ascii, std::vector<float>* record, Size* s);
 
+typedef struct Node Node;
+
 struct Node {
 	float points[3];
 	float len;
@@ -18,6 +20,6 @@ void build(Node* n, std::vector<float>* record, Size* s);
 
 void write_tecplot(char* filename, Node* n);
 
-void free(Node* n);
+void free_node(Node* n);
 #endif 
 

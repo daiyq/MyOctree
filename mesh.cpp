@@ -1,9 +1,12 @@
+
 #include "mesh.h"
 #include <cstdio> //fopen, fclose, printf, fread, sscanf
 #include <cstring> //strtok, 
 #include <cmath>
 #include <map>
 #include <vector>
+
+#include <cstdlib>
 
 
 //read .stl file
@@ -236,6 +239,7 @@ void make_child_null(Node* n) {
 void make_child_new(Node* n) {
 	for (size_t i = 0; i < 8; i++) {
 		n->child[i] = new Node;
+		//n->child[i] = (Node*)std::malloc(sizeof(Node));
 		n->child[i]->len = n->len / 2;
 	}
 	n->child[0]->points[0] = n->points[0];
@@ -442,6 +446,7 @@ void octree(Node* n, std::vector<float>* record) {
 	make_child_new(n);
 	spilt_to_child(n, record);
 	n->count.clear();
+	n->count.shrink_to_fit();
 
 	for (size_t i = 0; i < 8; i++) {
 		octree(n->child[i], record);
@@ -585,18 +590,18 @@ void write_tecplot(char* filename, Node* n) {
 	std::fclose(fout);
 }
 
-void free(Node* n) {
-	if (n->child[0] == nullptr) {
-		delete n;
-		return;
+void free_node(Node* n) {
+	if (n != nullptr) {
+		
+		free_node(n->child[0]);
+		free_node(n->child[1]);
+		free_node(n->child[2]);
+		free_node(n->child[3]);
+		free_node(n->child[4]);
+		free_node(n->child[5]);
+		free_node(n->child[6]);
+		free_node(n->child[7]);
+				
+		//delete n;
 	}
-
-	free(n->child[0]);
-	free(n->child[1]);
-	free(n->child[2]);
-	free(n->child[3]);
-	free(n->child[4]);
-	free(n->child[5]);
-	free(n->child[6]);
-	free(n->child[7]);
 }
