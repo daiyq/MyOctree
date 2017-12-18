@@ -16,7 +16,7 @@ struct Node {
 };
 void build(Node* n, std::vector<float>* record, Size* s);
 
-void write_vtk(char* filename, Node* n);
+void write_tecplot(char* filename, Node* n);
 
 void free(Node* n);
 #endif 
