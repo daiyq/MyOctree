@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#include "mesh.h"
+#include "mesh_smartptr.h"
 
 
 int main(int args, char* argv[])
@@ -68,27 +68,31 @@ int main(int args, char* argv[])
 
 	freeOctree(origin_node);
 	*/
-	Node* tmp = new Node;
-	tmp->child[0] = new Node;
+	//Node* tmp = new Node;
+	//tmp->child[0] = new Node;
 
-	delete tmp->child[0];
-	delete tmp;
+	//delete tmp->child[0];
+	//delete tmp;
 	std::printf("number of parameters: %d\n", args);
 	for (int i = 0; i < args; i++) {
 		std::printf("%s\n", argv[i]);
 	}
 
+	//wrapper function for use of smart pointer(shared_ptr)
+	//call the 3 function
+	for_test(argv[1], argv[2]);
+	/*
 	Size s;
 	std::vector<float> record;
-	//read_stl(argv[1], true, &record, &s);
+	read_stl(argv[1], true, &record, &s);
 
-	Node n;
-	//build(&n, &record, &s);
+	//Node n;
+	shared_ptr<Node> n = std::make_shared<Node>();
+	build(n, &record, &s);
 
-	//write_tecplot(argv[2], &n);
-
+	write_tecplot(argv[2], n);
+	*/
 	
-
 
 	//free_node(&n);
 
