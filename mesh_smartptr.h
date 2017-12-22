@@ -22,9 +22,9 @@ struct Node {
 };
 void build(shared_ptr<Node> n, std::vector<float>* record, Size* s);
 
-void write_tecplot(char* filename, shared_ptr<Node> n);
+void write_tecplot(char* filename1, char* filename2, shared_ptr<Node> n);
 
-void for_test(char* argv1,char* argv2);
+void wrapper(char* argv1,char* argv2);
 
 //void free_node(Node* n);
 #endif 

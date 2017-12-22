@@ -6,13 +6,14 @@
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
-#include <crtdbg.h>
+#include <crtdbg.h>//CRT
 
 #include "mesh_smartptr.h"
 
 
 int main(int args, char* argv[])
 {
+
 	/*
 	if(args!=4)
 	{
@@ -80,7 +81,7 @@ int main(int args, char* argv[])
 
 	//wrapper function for use of smart pointer(shared_ptr)
 	//call the 3 function
-	for_test(argv[1], argv[2]);
+	wrapper(argv[1], argv[2]);
 	/*
 	Size s;
 	std::vector<float> record;

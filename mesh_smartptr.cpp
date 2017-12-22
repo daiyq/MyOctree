@@ -1,12 +1,19 @@
 
 #include "mesh_smartptr.h"
+
+#include <xtstl.h>
+#include <string.h>
+#include <xtlocalh.h>
+#include <memory.h>
+#include <xtstlmesh.h>
+
 #include <cstdio> //fopen, fclose, printf, fread, sscanf
 #include <cstring> //strtok, 
 #include <cmath>
 #include <map>
 #include <vector>
 
-#include <cstdlib>
+//#include <cstdlib>
 
 
 //read .stl file
@@ -165,7 +172,8 @@ void read_stl_binary(char* filename, std::vector<float>* record, Size* s) {
 	char tem[2];
 	float vertex[12];
 	bool is_initilize = false;
-	for (size_t i = 0; i < count; i++) {
+	size_t count_t = static_cast<size_t>(count);
+	for (size_t i = 0; i < count_t; i++) {
 		std::fread(vertex, sizeof(float), 12, fin);
 		std::fread(tem, sizeof(char), 2, fin);
 		for (size_t j = 0; j < 12; j++) {
@@ -507,7 +515,7 @@ typedef std::vector<float> vec_point;
 typedef std::vector<int> vec_element;
 typedef std::map<Point, int> point_container;
 
-void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* ppoint, vec_element* pelement) {
+void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
 	if (pcontainer->find(p) != pcontainer->end()) {
 		pelement->push_back((*pcontainer)[p]);
 	}
@@ -522,67 +530,78 @@ void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* 
 		ppoint->push_back(p.y);
 		ppoint->push_back(p.z);
 		//the distance come from bb_tree
+		double pt[3];
+		pt[0] = static_cast<double>(p.x);
+		pt[1] = static_cast<double>(p.y);
+		pt[2] = static_cast<double>(p.z);
+		double dist = xt_stlmesh_isosurface(pt, stlmesh);
+		float dist1 = static_cast<float>(dist);
+		ppoint->push_back(dist1);
+
 
 		pelement->push_back(size + 1);
 	}
 }
 
-void traverse(shared_ptr<Node> n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement) {
+void traverse(shared_ptr<Node> n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
 	if (n->child[0] == nullptr) {
 		Point p;
 		//first point
 		p.x = n->points[0];
 		p.y = n->points[1];
 		p.z = n->points[2];
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		//second point,
 		p.x += n->len;//2
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.y += n->len;//3
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.x -= n->len;//4
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.y -= n->len;//5
 		p.z += n->len;
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.x += n->len;//6
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.y += n->len;//7
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.x -= n->len;//8
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		
 		return;
 	}
-	traverse(n->child[0], pcontainer, ppoint, pelement);
-	traverse(n->child[1], pcontainer, ppoint, pelement);
-	traverse(n->child[2], pcontainer, ppoint, pelement);
-	traverse(n->child[3], pcontainer, ppoint, pelement);
-	traverse(n->child[4], pcontainer, ppoint, pelement);
-	traverse(n->child[5], pcontainer, ppoint, pelement);
-	traverse(n->child[6], pcontainer, ppoint, pelement);
-	traverse(n->child[7], pcontainer, ppoint, pelement);
+	traverse(n->child[0], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[1], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[2], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[3], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[4], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[5], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[6], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[7], pcontainer, ppoint, pelement, stlmesh);
 }
 
-void write_tecplot(char* filename, shared_ptr<Node> n) {
-	FILE* fout = std::fopen(filename, "w");
+void write_tecplot(char* filename1, char* filename2, shared_ptr<Node> n) {
+	FILE* fout = std::fopen(filename2, "w");
 	if (!fout)
-		std::printf("cann't creat file %s/n", filename);
+		std::printf("cann't creat file %s/n", filename2);
 
 	point_container container;
 	vec_point point;
 	vec_element element;
-	traverse(n, &container, &point, &element);
+	xtStlMesh* stlmesh = xt_stlmesh_simple_new_with_bbtree(filename1, 0);
+	traverse(n, &container, &point, &element, stlmesh);
+
+	xt_stlmesh_destroy(stlmesh);
 
 	std::fprintf(fout, "TITLE=\"finite element grid\"\n");
-	std::fprintf(fout, "VARIABLES=\'X\', \'Y\', \'Z\'\n");
+	std::fprintf(fout, "VARIABLES=\'X\', \'Y\', \'Z\', \'distance\'\n");
 	//std::fprintf(fout, "VARIABLES=\"X\", \"Y\", \"Z\", \"DISTANCE\" \n");
-	int number_of_point = static_cast<int>(point.size()) / 3;
+	int number_of_point = static_cast<int>(point.size()) / 4;
 	int number_of_element = static_cast<int>(element.size()) / 8;
 	std::fprintf(fout, "ZONE N=%d E=%d F=FEPOINT, ET=BRICK\n", number_of_point, number_of_element);
 
 	for (int i = 0; i < number_of_point; i++) {
-		std::fprintf(fout, "%f %f %f\n", point[3 * i], point[3 * i + 1], point[3 * i + 2]);
+		std::fprintf(fout, "%f %f %f %f\n", point[4 * i], point[4 * i + 1], point[4 * i + 2], point[4 * i + 3]);
 	}
 	for (int i = 0; i < number_of_element; i++) {
 		std::fprintf(fout, "%d %d %d %d %d %d %d %d\n", element[8 * i], element[8 * i + 1], element[8 * i + 2], element[8 * i + 3], element[8 * i + 4], element[8 * i + 5], element[8 * i + 6], element[8 * i + 7]);
@@ -591,7 +610,7 @@ void write_tecplot(char* filename, shared_ptr<Node> n) {
 	std::fclose(fout);
 }
 
-void for_test(char* argv1, char* argv2) {
+void wrapper(char* argv1, char* argv2) {
 	Size s;
 	std::vector<float> record;
 	read_stl(argv1, true, &record, &s);
@@ -600,7 +619,7 @@ void for_test(char* argv1, char* argv2) {
 	shared_ptr<Node> n = std::make_shared<Node>();
 	build(n, &record, &s);
 
-	write_tecplot(argv2, n);
+	write_tecplot(argv1, argv2, n);
 
 }
 /*
