@@ -211,7 +211,7 @@ bool has_public_point(float p1[12], float p2[12]) {
 	return false;
 }
 
-size_t count_public_point(shared_ptr<Node> n, std::vector<float>* record) {
+size_t count_public_point(const unique_ptr<Node>& n, std::vector<float>* record) {
 	size_t count = 0;
 	for (size_t i = 1; i < n->count.size(); i++) {
 		if (has_public_point(&((*record)[n->count[0]]), &((*record)[12 * n->count[i]])))
@@ -228,7 +228,7 @@ bool has_cos_equal(float p1[12], float p2[12]) {
 	return true;
 }
 
-size_t count_cos_equal(shared_ptr<Node> n, std::vector<float>* record) {
+size_t count_cos_equal(const unique_ptr<Node>& n, std::vector<float>* record) {
 	size_t count = 0;
 	for (size_t i = 1; i < n->count.size(); i++) {
 		if (has_cos_equal(&((*record)[n->count[0]]), &((*record)[12 * n->count[i]])))
@@ -237,15 +237,16 @@ size_t count_cos_equal(shared_ptr<Node> n, std::vector<float>* record) {
 	return count;
 }
 
-void make_child_null(shared_ptr<Node> n) {
+void make_child_null(unique_ptr<Node>& n) {
 	for (size_t i = 0; i < 8; i++) {
+		n->child[i] = unique_ptr<Node>(new Node);
 		n->child[i] = nullptr;
 	}
 }
 
-void make_child_new(shared_ptr<Node> n) {
+void make_child_new(unique_ptr<Node>& n) {
 	for (size_t i = 0; i < 8; i++) {	
-		n->child[i] = std::make_shared<Node>();
+		n->child[i] = unique_ptr<Node>(new Node);
 		n->child[i]->len = n->len / 2;
 	}
 	n->child[0]->points[0] = n->points[0];
@@ -422,7 +423,7 @@ bool projection(float cube_point[3], float cube_len, float triangle[12]) {
 	return true;
 }
 
-void spilt_to_child(shared_ptr<Node> n, std::vector<float>* record) {
+void spilt_to_child(unique_ptr<Node>& n, std::vector<float>* record) {
 	for (size_t i = 0; i < n->count.size(); i++) {
 		for (size_t j = 0; j < 8; j++) {
 			if (projection(n->child[j]->points, n->child[j]->len, &((*record)[12 * n->count[i]])))
@@ -431,7 +432,7 @@ void spilt_to_child(shared_ptr<Node> n, std::vector<float>* record) {
 	}
 }
 
-void octree(shared_ptr<Node> n, std::vector<float>* record) {
+void octree(unique_ptr<Node>& n, std::vector<float>* record) {
 	if (n->count.size() < 5) {
 		make_child_null(n);
 		return;
@@ -459,7 +460,7 @@ void octree(shared_ptr<Node> n, std::vector<float>* record) {
 	}
 }
 
-void build(shared_ptr<Node> n, std::vector<float>* record, Size* s) {
+void build(unique_ptr<Node>& n, std::vector<float>* record, Size* s) {
 	//initialization
 	float length = s->max[0] - s->min[0];
 	if (length < (s->max[1] - s->min[1]))
@@ -537,7 +538,7 @@ void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* 
 	}
 }
 
-void traverse(shared_ptr<Node> n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
+void traverse(const unique_ptr<Node>& n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
 	if (n->child[0] == nullptr) {
 		Point p;
 		//first point
@@ -574,7 +575,7 @@ void traverse(shared_ptr<Node> n, point_container* pcontainer, vec_point* ppoint
 	traverse(n->child[7], pcontainer, ppoint, pelement, stlmesh);
 }
 
-void write_tecplot(char* filename1, char* filename2, shared_ptr<Node> n) {
+void write_tecplot(char* filename1, char* filename2, const unique_ptr<Node>& n) {
 	FILE* fout = std::fopen(filename2, "w");
 	if (!fout)
 		std::printf("cann't creat file %s/n", filename2);
@@ -610,9 +611,28 @@ void wrapper(char* argv1, char* argv2) {
 	read_stl(argv1, true, &record, &s);
 
 	//Node n;
-	shared_ptr<Node> n = std::make_shared<Node>();
+	unique_ptr<Node> n = unique_ptr<Node>(new Node);
 	build(n, &record, &s);
 
 	write_tecplot(argv1, argv2, n);
 
+}
+
+void test_size_of_Node() {
+	
+	float i[3] = { 1,2,3 };
+	std::printf("size of float array: %d\n", sizeof(i));//12
+	std::printf("size of float: %d\n", sizeof(i[1]));//4
+
+	std::unique_ptr<Node> un(new Node);
+	std::printf("size of unique_ptr: %d\n", sizeof(un));//4
+	Node* raw_ptr[8];
+	for (size_t i = 0; i < 8; i++) {
+		raw_ptr[i] = new Node;
+	}
+	std::printf("size of raw_ptr array: %d\n", sizeof(raw_ptr));//32
+
+	std::vector<size_t> count;
+	std::printf("size of vector: %d\n", sizeof(count));//16
+	float j = i[1];
 }

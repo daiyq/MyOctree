@@ -64,6 +64,8 @@ int main(int args, char* argv[])
 
 	freeOctree(origin_node);
 	*/
+
+	test_size_of_Node();
 	
 	std::printf("number of parameters: %d\n", args);
 	for (int i = 0; i < args; i++) {
