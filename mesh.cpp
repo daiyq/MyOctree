@@ -1,12 +1,18 @@
-
 #include "mesh.h"
+
+#include <xtstl.h>
+#include <string.h>
+#include <xtlocalh.h>
+#include <memory.h>
+#include <xtstlmesh.h>
+
 #include <cstdio> //fopen, fclose, printf, fread, sscanf
 #include <cstring> //strtok, 
 #include <cmath>
 #include <map>
 #include <vector>
 
-#include <cstdlib>
+//#include <cstdlib>
 
 
 //read .stl file
@@ -69,14 +75,14 @@ void compare_point(float triangle[3], Size* s) {
 	}
 }
 
-void compare_triangle(float triangle[9], Size* s) {
+void compare_triangle(float triangle[12], Size* s) {
 	for (size_t i = 0; i < 3; i++) {
-		if (s->min[i] > min(triangle[i], triangle[i + 3], triangle[i + 6]))
-			s->min[i] = min(triangle[i], triangle[i + 3], triangle[i + 6]);
+		if (s->min[i] > min(triangle[i + 3], triangle[i + 6], triangle[i + 9]))
+			s->min[i] = min(triangle[i + 3], triangle[i + 6], triangle[i + 9]);
 	}
 	for (size_t i = 0; i < 3; i++) {
-		if (s->max[i] < max(triangle[i], triangle[i + 3], triangle[i + 6]))
-			s->max[i] = max(triangle[i], triangle[i + 3], triangle[i + 6]);
+		if (s->max[i] < max(triangle[i + 3], triangle[i + 6], triangle[i + 9]))
+			s->max[i] = max(triangle[i + 3], triangle[i + 6], triangle[i + 9]);
 	}
 }
 
@@ -95,10 +101,10 @@ void read_stl_ascii(char* filename, std::vector<float>* record, Size* s) {
 
 		char* token = std::strtok(line, seps);
 
-		if (!std::strcmp(token, "soild")) {
+		if (!std::strcmp(token, "solid")) {
 			continue;
 		}
-		else if (!std::strcmp(token, "endsoild")) {
+		else if (!std::strcmp(token, "endsolid")) {
 			break;
 		}
 		else if (!std::strcmp(token, "facet")) {
@@ -165,7 +171,8 @@ void read_stl_binary(char* filename, std::vector<float>* record, Size* s) {
 	char tem[2];
 	float vertex[12];
 	bool is_initilize = false;
-	for (size_t i = 0; i < count; i++) {
+	size_t count_t = static_cast<size_t>(count);
+	for (size_t i = 0; i < count_t; i++) {
 		std::fread(vertex, sizeof(float), 12, fin);
 		std::fread(tem, sizeof(char), 2, fin);
 		for (size_t j = 0; j < 12; j++) {
@@ -180,7 +187,7 @@ void read_stl_binary(char* filename, std::vector<float>* record, Size* s) {
 			s->max[2] = max(vertex[12 * i + 5], vertex[12 * i + 8], vertex[12 * i + 11]);
 			is_initilize = true;
 		}
-		compare_triangle(&vertex[12 * i + 3], s);
+		compare_triangle(vertex, s);
 	}
 
 	std::fclose(fin);
@@ -204,7 +211,7 @@ bool has_public_point(float p1[12], float p2[12]) {
 	return false;
 }
 
-size_t count_public_point(Node* n, std::vector<float>* record) {
+size_t count_public_point(shared_ptr<Node> n, std::vector<float>* record) {
 	size_t count = 0;
 	for (size_t i = 1; i < n->count.size(); i++) {
 		if (has_public_point(&((*record)[n->count[0]]), &((*record)[12 * n->count[i]])))
@@ -221,7 +228,7 @@ bool has_cos_equal(float p1[12], float p2[12]) {
 	return true;
 }
 
-size_t count_cos_equal(Node* n, std::vector<float>* record) {
+size_t count_cos_equal(shared_ptr<Node> n, std::vector<float>* record) {
 	size_t count = 0;
 	for (size_t i = 1; i < n->count.size(); i++) {
 		if (has_cos_equal(&((*record)[n->count[0]]), &((*record)[12 * n->count[i]])))
@@ -230,16 +237,15 @@ size_t count_cos_equal(Node* n, std::vector<float>* record) {
 	return count;
 }
 
-void make_child_null(Node* n) {
+void make_child_null(shared_ptr<Node> n) {
 	for (size_t i = 0; i < 8; i++) {
 		n->child[i] = nullptr;
 	}
 }
 
-void make_child_new(Node* n) {
-	for (size_t i = 0; i < 8; i++) {
-		n->child[i] = new Node;
-		//n->child[i] = (Node*)std::malloc(sizeof(Node));
+void make_child_new(shared_ptr<Node> n) {
+	for (size_t i = 0; i < 8; i++) {	
+		n->child[i] = std::make_shared<Node>();
 		n->child[i]->len = n->len / 2;
 	}
 	n->child[0]->points[0] = n->points[0];
@@ -416,7 +422,7 @@ bool projection(float cube_point[3], float cube_len, float triangle[12]) {
 	return true;
 }
 
-void spilt_to_child(Node* n, std::vector<float>* record) {
+void spilt_to_child(shared_ptr<Node> n, std::vector<float>* record) {
 	for (size_t i = 0; i < n->count.size(); i++) {
 		for (size_t j = 0; j < 8; j++) {
 			if (projection(n->child[j]->points, n->child[j]->len, &((*record)[12 * n->count[i]])))
@@ -425,7 +431,7 @@ void spilt_to_child(Node* n, std::vector<float>* record) {
 	}
 }
 
-void octree(Node* n, std::vector<float>* record) {
+void octree(shared_ptr<Node> n, std::vector<float>* record) {
 	if (n->count.size() < 5) {
 		make_child_null(n);
 		return;
@@ -453,7 +459,7 @@ void octree(Node* n, std::vector<float>* record) {
 	}
 }
 
-void build(Node* n, std::vector<float>* record, Size* s) {
+void build(shared_ptr<Node> n, std::vector<float>* record, Size* s) {
 	//initialization
 	float length = s->max[0] - s->min[0];
 	if (length < (s->max[1] - s->min[1]))
@@ -506,82 +512,90 @@ typedef std::vector<float> vec_point;
 typedef std::vector<int> vec_element;
 typedef std::map<Point, int> point_container;
 
-void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* ppoint, vec_element* pelement) {
+void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
 	if (pcontainer->find(p) != pcontainer->end()) {
 		pelement->push_back((*pcontainer)[p]);
 	}
 	else {
 		int size = static_cast<int>(pcontainer->size());
-		//Value v;
-		//v.numbering = size + 1;
-		//calcute the distance using bb_tree
-
+		
 		(*pcontainer)[p] = size + 1;
 		ppoint->push_back(p.x);
 		ppoint->push_back(p.y);
 		ppoint->push_back(p.z);
 		//the distance come from bb_tree
+		double pt[3];
+		pt[0] = static_cast<double>(p.x);
+		pt[1] = static_cast<double>(p.y);
+		pt[2] = static_cast<double>(p.z);
+		double dist = xt_stlmesh_isosurface(pt, stlmesh);
+		float dist1 = static_cast<float>(dist);
+		ppoint->push_back(dist1);
+
 
 		pelement->push_back(size + 1);
 	}
 }
 
-void traverse(Node* n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement) {
+void traverse(shared_ptr<Node> n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
 	if (n->child[0] == nullptr) {
 		Point p;
 		//first point
 		p.x = n->points[0];
 		p.y = n->points[1];
 		p.z = n->points[2];
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		//second point,
 		p.x += n->len;//2
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.y += n->len;//3
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.x -= n->len;//4
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.y -= n->len;//5
 		p.z += n->len;
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.x += n->len;//6
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.y += n->len;//7
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		p.x -= n->len;//8
-		insert_point_and_element(p, pcontainer, ppoint, pelement);
+		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
 		
 		return;
 	}
-	traverse(n->child[0], pcontainer, ppoint, pelement);
-	traverse(n->child[1], pcontainer, ppoint, pelement);
-	traverse(n->child[2], pcontainer, ppoint, pelement);
-	traverse(n->child[3], pcontainer, ppoint, pelement);
-	traverse(n->child[4], pcontainer, ppoint, pelement);
-	traverse(n->child[5], pcontainer, ppoint, pelement);
-	traverse(n->child[6], pcontainer, ppoint, pelement);
-	traverse(n->child[7], pcontainer, ppoint, pelement);
+	traverse(n->child[0], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[1], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[2], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[3], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[4], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[5], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[6], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[7], pcontainer, ppoint, pelement, stlmesh);
 }
 
-void write_tecplot(char* filename, Node* n) {
-	FILE* fout = std::fopen(filename, "w");
+void write_tecplot(char* filename1, char* filename2, shared_ptr<Node> n) {
+	FILE* fout = std::fopen(filename2, "w");
 	if (!fout)
-		std::printf("cann't creat file %s/n", filename);
+		std::printf("cann't creat file %s/n", filename2);
 
 	point_container container;
 	vec_point point;
 	vec_element element;
-	traverse(n, &container, &point, &element);
+	xtStlMesh* stlmesh = xt_stlmesh_simple_new_with_bbtree(filename1, 0);
+	traverse(n, &container, &point, &element, stlmesh);
+
+	xt_stlmesh_destroy(stlmesh);
 
 	std::fprintf(fout, "TITLE=\"finite element grid\"\n");
-	std::fprintf(fout, "VARIABLES=\'X\', \'Y\', \'Z\'\n");
+	std::fprintf(fout, "VARIABLES=\'X\', \'Y\', \'Z\', \'distance\'\n");
 	//std::fprintf(fout, "VARIABLES=\"X\", \"Y\", \"Z\", \"DISTANCE\" \n");
-	int number_of_point = static_cast<int>(point.size()) / 3;
+	int number_of_point = static_cast<int>(point.size()) / 4;
 	int number_of_element = static_cast<int>(element.size()) / 8;
 	std::fprintf(fout, "ZONE N=%d E=%d F=FEPOINT, ET=BRICK\n", number_of_point, number_of_element);
 
 	for (int i = 0; i < number_of_point; i++) {
-		std::fprintf(fout, "%f %f %f\n", point[3 * i], point[3 * i + 1], point[3 * i + 2]);
+		std::fprintf(fout, "%f %f %f %f\n", point[4 * i], point[4 * i + 1], point[4 * i + 2], point[4 * i + 3]);
 	}
 	for (int i = 0; i < number_of_element; i++) {
 		std::fprintf(fout, "%d %d %d %d %d %d %d %d\n", element[8 * i], element[8 * i + 1], element[8 * i + 2], element[8 * i + 3], element[8 * i + 4], element[8 * i + 5], element[8 * i + 6], element[8 * i + 7]);
@@ -590,18 +604,15 @@ void write_tecplot(char* filename, Node* n) {
 	std::fclose(fout);
 }
 
-void free_node(Node* n) {
-	if (n != nullptr) {
-		
-		free_node(n->child[0]);
-		free_node(n->child[1]);
-		free_node(n->child[2]);
-		free_node(n->child[3]);
-		free_node(n->child[4]);
-		free_node(n->child[5]);
-		free_node(n->child[6]);
-		free_node(n->child[7]);
-				
-		//delete n;
-	}
+void wrapper(char* argv1, char* argv2) {
+	Size s;
+	std::vector<float> record;
+	read_stl(argv1, true, &record, &s);
+
+	//Node n;
+	shared_ptr<Node> n = std::make_shared<Node>();
+	build(n, &record, &s);
+
+	write_tecplot(argv1, argv2, n);
+
 }

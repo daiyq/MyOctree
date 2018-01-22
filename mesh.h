@@ -2,6 +2,9 @@
 #define MESH_H_
 #include <vector>
 
+#include <memory>
+using std::shared_ptr;
+
 struct Size {
 	float min[3];
 	float max[3];
@@ -13,13 +16,15 @@ typedef struct Node Node;
 struct Node {
 	float points[3];
 	float len;
-	Node* child[8];
+	//Node* child[8];
+	shared_ptr<Node> child[8];
 	std::vector<size_t> count;
 };
-void build(Node* n, std::vector<float>* record, Size* s);
+void build(shared_ptr<Node> n, std::vector<float>* record, Size* s);
 
-void write_tecplot(char* filename, Node* n);
+void write_tecplot(char* filename1, char* filename2, shared_ptr<Node> n);
 
-void free_node(Node* n);
+void wrapper(char* argv1,char* argv2);
+
+//void free_node(Node* n);
 #endif 
-
