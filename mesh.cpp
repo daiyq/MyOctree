@@ -704,6 +704,7 @@ void make_child_new(Node* n) {
 	for (size_t i = 0; i < 8; i++) {
 		n->child[i] = new Node;
 		n->child[i]->len = n->len / 2;
+		make_child_null(n->child[i]);
 	}
 	n->child[0]->points[0] = n->points[0];
 	n->child[0]->points[1] = n->points[1];
@@ -988,10 +989,11 @@ Node* get_node(Node* root, size_t m) {
 	return root;
 }
 
-//if the node is existed, return true
-//if not, split to set it, and return false
-bool set_neighbor(Node* root, size_t m) {	
-	bool splited = true;
+//if the node is existed, return nullptr
+//if not, split to set it, and return the splited node
+Node* set_node(Node* root, size_t m) {
+	Node* splited_node = nullptr;
+	bool splited = false;
 	std::stack<size_t> s;
 	while (m != 0) {
 		if (m % 8 == 0) {
@@ -1007,12 +1009,15 @@ bool set_neighbor(Node* root, size_t m) {
 	while (s.size() > 1) {
 		if (root->child[s.top()] == nullptr) {
 			make_child_new(root);
-			splited = false;
+			if (!splited) {
+				splited_node = root;
+			}
+			splited = true;
 		}
 		root = root->child[s.top()];
 		s.pop();
 	}
-	return splited;
+	return splited_node;
 }
 
 struct Neighbor {
@@ -1084,11 +1089,12 @@ Neighbor find_and_balance(Node* n, Node* root) {
 			neighbor.neighbor[i] = nullptr;
 		}
 		else {
-			if (set_neighbor(root, neighbor_mark)) {
+			Node* splited_node = set_node(root, neighbor_mark);
+			if (splited_node == nullptr) {
 				neighbor.neighbor[i] = nullptr;
 			}
 			else {
-				neighbor.neighbor[i] = get_node(root, brother_mark);
+				neighbor.neighbor[i] = splited_node;
 			}
 			
 			/*
@@ -1142,6 +1148,12 @@ void smooth_tree(Node* root) {
 	while (!q.empty()) {
 		father = q.front();
 		q.pop();
+
+		if (father->child[0] != nullptr) {
+			for (size_t i = 0; i < 8; i++) {
+				q.push(father->child[i]);
+			}
+		}
 
 		t = find_and_balance(father, root);
 		for (size_t i = 0; i < 6; i++) {
