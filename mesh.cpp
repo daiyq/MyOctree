@@ -1124,6 +1124,11 @@ Neighbor find_and_balance(Node* n, Node* root) {
 	return neighbor;
 }
 
+//find neighbors, the tree has been balanced
+Neighbor find_neighbor(Node* n, Node* root) {
+
+}
+
 //discard!!
 //if the neighbor is balanced( in the same depth or less than 1 level), return true.
 //else return false after split the neighbor to balance
@@ -1172,6 +1177,96 @@ void smooth_tree(Node* root) {
 				}
 			}
 		}
+
+	}
+}
+
+
+//find axis of model according to mesh
+
+//the node n must be leaf node
+//to confirm whether the node satisfy that the node contain the axis of the model
+bool is_axis(Node* n, xtStlMesh* stlmesh) {
+	float points[3][2][3];
+	for (size_t i = 0; i < 3; i++) {
+		for (size_t j = 0; j < 2; j++) {
+			points[i][j][0] = n->points[0];
+			points[i][j][1] = n->points[1];
+			points[i][j][2] = n->points[2];
+		}
+	}
+	/*
+	points[0][0][0] -= n->len / 2;//X
+	points[0][1][0] += n->len / 2;
+	points[1][0][1] -= n->len / 2;//Y
+	points[1][1][1] += n->len / 2;
+	points[2][0][2] -= n->len / 2;//Z
+	points[2][1][2] += n->len / 2;
+	*/
+	for (size_t i = 0; i < 3; i++) {
+		points[i][0][i] -= n->len / 2;
+		points[i][1][i] += n->len / 2;
+	}
+
+	for (size_t i = 0; i < 3; i++) {
+		
+	}
+
+	return false;
+}
+
+bool is_axis_x(Node* back, Node* front, xtStlMesh* stlmesh) {
+
+}
+
+bool is_axis_y(Node* left, Node* right, xtStlMesh* stlmesh) {
+
+}
+
+bool is_axis_z(Node* lower, Node* upper, xtStlMesh* stlmesh) {
+
+}
+
+void queue_node(Node* n, std::queue<Node*>* q_ptr) {
+	if (n == nullptr)
+		return;
+
+	if (n->child[0] == nullptr) {
+		q_ptr->push(n);
+		return;
+	}
+
+	for (size_t i = 0; i < 8; i++) {
+		queue_node(n->child[i], q_ptr);
+	}
+}
+
+void find_axis(Node* n) {
+	//TODO:
+	xtStlMesh* stlmesh;
+
+	std::queue<Node*> q;
+	queue_node(n, &q);
+
+	//the Node* satisfy the axis's condition
+	std::queue<Node*> axis;
+	//to be make sure according to its neighbor
+	//to be used caculating
+	std::queue<Node*> tmp;
+
+	//the single cell is on axis
+	while (!q.empty()) {
+		Node* t = q.front();
+		if (is_axis(t, stlmesh)) {
+			axis.push(t);
+		}
+		else {
+			tmp.push(t);
+		}
+	}
+
+	//with the neighbor to be on axis
+	while (!tmp.empty()) {
 
 	}
 }
