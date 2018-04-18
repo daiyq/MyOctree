@@ -13,28 +13,51 @@
 #include <vector>
 #include <queue>
 #include <stack>
-
+#include <cfloat>
 
 //#include <cstdlib>
 
 
 //read .stl file
 
+bool equal_float(float t1, float t2) {
+	float diff = std::abs(t1 - t2);
+
+	if (t1 == t2)
+		return true;
+	//FLT_MIN:minimum normalized positive value
+	else if (t1 == 0 || t2 == 0 || diff < FLT_MIN)
+		return diff < FLT_EPSILON*FLT_MIN;
+	else
+		return diff / std::min(std::abs(t1) + std::abs(t2), FLT_MAX) < FLT_EPSILON;
+
+}
+
 float max(float t1, float t2) {
+	/*
 	if (t1 >= t2)
 		return t1;
 	return t2;
+	*/
+	if (equal_float(t1, t2))
+		return t1;
+
+	return t1 > t2 ? t1 : t2;
 }
 
 float max(float t1, float t2, float t3) {
+	/*
 	if (t1 >= t2 && t1 >= t3)
 		return t1;
 	if (t2 >= t1 && t2 >= t3)
 		return t2;
 	return t3;
+	*/
+	return max(max(t1, t2), t3);
 }
 
 float max(float t1, float t2, float t3, float t4) {
+	/*
 	if (t1 >= t2 && t1 >= t3 && t1 >= t4)
 		return t1;
 	if (t2 >= t1 && t2 >= t3 && t2 >= t4)
@@ -42,23 +65,35 @@ float max(float t1, float t2, float t3, float t4) {
 	if (t3 >= t1 && t3 >= t2 && t3 >= t4)
 		return t3;
 	return t4;
+	*/
+	return max(max(t1, t2, t3), t4);
 }
 
 float min(float t1, float t2) {
+	/*
 	if (t1 <= t2)
 		return t1;
 	return t2;
+	*/
+	if (equal_float(t1, t2))
+		return t1;
+
+	return t1 < t2 ? t1 : t2;
 }
 
 float min(float t1, float t2, float t3) {
+	/*
 	if (t1 <= t2 && t1 <= t3)
 		return t1;
 	if (t2 <= t1 && t2 <= t3)
 		return t2;
 	return t3;
+	*/
+	return min(min(t1, t2), t3);
 }
 
 float min(float t1, float t2, float t3, float t4) {
+	/*
 	if (t1 <= t2 && t1 <= t3 && t1 <= t4)
 		return t1;
 	if (t2 <= t1 && t2 <= t3 && t2 <= t4)
@@ -66,27 +101,41 @@ float min(float t1, float t2, float t3, float t4) {
 	if (t3 <= t1 && t3 <= t2 && t3 <= t4)
 		return t3;
 	return t4;
+	*/
+	return min(min(t1, t2, t3), t4);
 }
 
 void compare_point(float triangle[3], Size* s) {
 	for (size_t i = 0; i < 3; i++) {
+		/*
 		if (s->min[i] > triangle[i])
 			s->min[i] = triangle[i];
+			*/
+		s->min[i] = min(s->min[i], triangle[i]);
 	}
 	for (size_t i = 0; i < 3; i++) {
+		/*
 		if (s->max[i] < triangle[i])
 			s->max[i] = triangle[i];
+			*/
+		s->max[i] = max(s->max[i], triangle[i]);
 	}
 }
 
 void compare_triangle(float triangle[12], Size* s) {
 	for (size_t i = 0; i < 3; i++) {
+		/*
 		if (s->min[i] > min(triangle[i + 3], triangle[i + 6], triangle[i + 9]))
 			s->min[i] = min(triangle[i + 3], triangle[i + 6], triangle[i + 9]);
+		*/
+		s->min[i] = min(s->min[i], triangle[i + 3], triangle[i + 6], triangle[i + 9]);
 	}
 	for (size_t i = 0; i < 3; i++) {
+		/*
 		if (s->max[i] < max(triangle[i + 3], triangle[i + 6], triangle[i + 9]))
 			s->max[i] = max(triangle[i + 3], triangle[i + 6], triangle[i + 9]);
+			*/
+		s->max[i] = max(s->max[i], triangle[i + 3], triangle[i + 6], triangle[i + 9]);
 	}
 }
 
@@ -165,7 +214,7 @@ void read_stl_ascii(char* filename, std::vector<float>* record, Size* s) {
 void read_stl_binary(char* filename, std::vector<float>* record, Size* s) {
 	FILE* fin = std::fopen(filename, "rb");
 	if (!fin)
-		printf("cann't open file %s/n", filename);
+		printf("cann't open file %s\n", filename);
 
 	char header[80];
 	fread(header, sizeof(char), 80, fin);
@@ -660,8 +709,12 @@ void wrapper(char* argv1, char* argv2) {
 bool has_public_point(float p1[12], float p2[12]) {
 	for (size_t i = 0; i < 3; i++) {
 		for (size_t j = 0; j < 3; j++) {
+			if (equal_float(p1[3 + i * 3], p2[3 + j * 3]) && equal_float(p1[3 + i * 3 + 1], p2[3 + j * 3 + 1]) && equal_float(p1[3 + i * 3 + 2], p2[3 + j * 3 + 2]))
+				return true;
+			/*
 			if (p1[3 + i * 3] == p2[3 + j * 3] && p1[3 + i * 3 + 1] == p2[3 + j * 3 + 1] && p1[3 + i * 3 + 2] == p2[3 + j * 3 + 2])
 				return true;
+				*/
 		}
 	}
 	return false;
@@ -752,8 +805,12 @@ bool is_point_in_square(float square[4][2], float tri[2]) {
 	float max_x = max(square[0][0], square[1][0], square[2][0], square[3][0]);
 	float min_y = min(square[0][1], square[1][1], square[2][1], square[3][1]);
 	float max_y = max(square[0][1], square[1][1], square[2][1], square[3][1]);
+	if ((!equal_float(tri[0], min_x) && tri[0] > min_x) && (!equal_float(tri[0], max_x) && tri[0] < max_x) && (!equal_float(tri[1], min_y) && tri[1] > min_y) && (!equal_float(tri[1], max_y) && tri[1] < max_y))
+		return true;
+	/*
 	if (tri[0] > min_x&&tri[0]<max_x&&tri[1]>min_y&&tri[1] < max_y)
 		return true;
+		*/
 	return false;
 }
 
@@ -768,42 +825,51 @@ bool is_line_crossed(float s_line[2][2], float t_line[2][2]) {
 	float t_min_y = min(t_line[0][1], t_line[1][1]);
 	float t_max_y = max(t_line[0][1], t_line[1][1]);
 
+	/*
+	if (equal_float(t_line[0][0], t_line[1][0]) && equal_float(t_line[1][0], t_line[1][1])) {
+		return false;
+	}
+	*/
+	/*
 	if (t_line[0][0] == t_line[1][0] && t_line[1][0] == t_line[1][1]) {
 		return false;
 	}
-
-	if (s_line[0][0] == s_line[1][0]) {
-		if (t_line[0][0] == t_line[1][0]) {
+	*/
+	
+	if (equal_float(s_line[0][0], s_line[1][0])) {
+		if (equal_float(t_line[0][0], t_line[1][0])) {
 			return false;
 		}
 		else {
 			if (s_line[0][0] > t_min_x && s_line[0][0] < t_max_x) {
 				float y = (t_line[1][1] - t_line[0][1])*(s_line[0][0] - t_line[0][0]) / (t_line[1][0] - t_line[0][0]) + t_line[0][1];
+				//may have a bug here
 				if (y > s_min_y && y < s_max_y)
 					return true;
 			}
 		}
-		return false;
 	}
-
-	if (s_line[0][1] == s_line[1][1]) {
-		if (t_line[0][1] == t_line[1][1]) {
+	
+	if (equal_float(s_line[0][1], s_line[1][1])) {
+		if (equal_float(t_line[0][1], t_line[1][1])) {
 			return false;
 		}
 		else {
 			if (s_line[0][1] > t_min_y && s_line[0][1] < t_max_y) {
-				if (t_line[0][0] == t_line[1][0]) {
+				if (equal_float(t_line[0][0], t_line[1][0])) {
 					if (t_line[0][0] > s_min_x&&t_line[0][0] < s_max_x)
 						return true;
 					return false;
 				}
 				float x = (t_line[1][0] - t_line[0][0])*(s_line[0][1] - t_line[0][1]) / (t_line[1][1] - t_line[0][1]) + t_line[0][0];
+				
 				if (x > t_min_x && x < t_max_x)
 					return true;
 			}
-		}
-		return false;
+		}		
 	}
+
+	return false;
 }
 
 bool is_crossed(float square[4][2], float tri[3][2]) {
@@ -906,7 +972,7 @@ void spilt_to_child(Node* n, std::vector<float>* record) {
 
 void octree(Node* n, std::vector<float>* record) {
 	//if the depth is bigger than 10, stop and return
-	if (n->mark > 134217728) {
+	if (n->mark > 2097152) {
 		make_child_null(n);
 		return;
 	}
@@ -940,13 +1006,15 @@ void octree(Node* n, std::vector<float>* record) {
 
 void build_octree(Node* n, std::vector<float>* record, Size* s) {
 	//initialization
-	float length = s->max[0] - s->min[0];
+	float length = max(s->max[0] - s->min[0], s->max[1] - s->min[1], s->max[2] - s->min[2]);
+	/*
 	if (length < (s->max[1] - s->min[1]))
 		length = s->max[1] - s->min[1];
 	if (length < (s->max[2] - s->min[2]))
 		length = s->max[2] - s->min[2];
+		*/
+	
 	n->len = length;
-
 	n->mark = 0;
 
 	for (size_t i = 0; i < 3; i++) {
@@ -1038,7 +1106,7 @@ bool cell_neighbor[8][6] = { { true,false,false,true,false,true },//8
 
 
 //find 6 neighbors (in X, Y, Z) of n,
-Neighbor find_and_balance(Node* n, Node* root) {	
+Neighbor find_balanceing(Node* n, Node* root) {	
 	Neighbor neighbor;
 	std::stack<size_t> marking;
 
@@ -1059,21 +1127,21 @@ Neighbor find_and_balance(Node* n, Node* root) {
 		
 		//to get the brother mark which marks the brother node
 		//brother node means the brother in the same cell
-		size_t brother_mark;
+		size_t ancestor_brother_mark;
 		if (m == 0) { 
 			//the cell is on the border
-			brother_mark = 0;
+			ancestor_brother_mark = 0;
 		}
 		else if (m % 8 == 0) {
-			brother_mark = m - 8 + direction_neighbor[m % 8][i / 2];
+			ancestor_brother_mark = m - 8 + direction_neighbor[m % 8][i / 2];
 		}
 		else {
-			brother_mark = (m / 8) * 8 + direction_neighbor[m % 8][i / 2];
+			ancestor_brother_mark = (m / 8) * 8 + direction_neighbor[m % 8][i / 2];
 		}
 		
 		size_t depth_from_brother_to_neighbor = marking.size();
 
-		size_t neighbor_mark = brother_mark;
+		size_t neighbor_mark = ancestor_brother_mark;
 		while (!marking.empty()) {
 			neighbor_mark = neighbor_mark * 8 + marking.top();
 			marking.pop();
@@ -1081,7 +1149,7 @@ Neighbor find_and_balance(Node* n, Node* root) {
 
 		//if the neighboring node is balanced, make it nullpttr
 		//if not, balance it, and return the brother node
-		if (brother_mark == 0) {
+		if (ancestor_brother_mark == 0) {
 			neighbor.neighbor[i] = nullptr;
 		}
 		else if (depth_from_brother_to_neighbor < 2) {
@@ -1126,7 +1194,53 @@ Neighbor find_and_balance(Node* n, Node* root) {
 
 //find neighbors, the tree has been balanced
 Neighbor find_neighbor(Node* n, Node* root) {
+	Neighbor neighbor;
+	std::stack<size_t> marking;
 
+	for (size_t i = 0; i < 6; i++) {
+		size_t m = n->mark;
+		while (!cell_neighbor[m % 8][i] && m != 0) {
+			//m = m / 8;
+			//the same depth's mark has been pushed
+			if (m % 8 == 0) {
+				marking.push(direction_neighbor[m % 8][i / 2]);//7
+				m = m / 8 - 1;
+			}
+			else {
+				marking.push(direction_neighbor[m % 8][i / 2]);
+				m = m / 8;
+			}
+		}
+
+		size_t ancestor_brother_mark;
+		if (m == 0) {
+			//the cell is on the border
+			ancestor_brother_mark = 0;
+		}
+		else if (m % 8 == 0) {
+			ancestor_brother_mark = m - 8 + direction_neighbor[m % 8][i / 2];
+		}
+		else {
+			ancestor_brother_mark = (m / 8) * 8 + direction_neighbor[m % 8][i / 2];
+		}
+
+		Node* ancestor_brother = get_node(root, ancestor_brother_mark);
+		while (!marking.empty() && ancestor_brother->child[0] != nullptr) {
+			ancestor_brother = ancestor_brother->child[marking.top()];
+			marking.pop();
+		}
+
+		if (ancestor_brother_mark == 0) {
+			//on the border, its neighbor is nullptr
+			neighbor.neighbor[i] = nullptr;
+		}
+		else {
+			neighbor.neighbor[i] = ancestor_brother;
+		}
+
+	}
+
+	return neighbor;
 }
 
 //discard!!
@@ -1160,7 +1274,7 @@ void smooth_tree(Node* root) {
 			}
 		}
 
-		t = find_and_balance(father, root);
+		t = find_balanceing(father, root);
 		for (size_t i = 0; i < 6; i++) {
 			/*
 			if (!balance_neighbor(root, father, t.neighbor[i])) {
@@ -1184,15 +1298,59 @@ void smooth_tree(Node* root) {
 
 //find axis of model according to mesh
 
+double for_cos(double p1[3], double p2[3], double p3[3], double p4[3]) {
+	double vec1[3], vec2[3];
+	for (size_t i = 0; i < 3; i++) {
+		vec1[i] = p2[i] - p1[i];
+		vec2[i] = p4[i] - p3[i];
+	}
+	return (vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2]) / (std::sqrt(std::pow(vec1[0], 2) + std::pow(vec1[1], 2) + std::pow(vec1[2], 2))*std::sqrt(std::pow(vec2[0], 2) + std::pow(vec2[1], 2) + std::pow(vec2[2], 2)));
+}
+
+//return -1 when point is in modle
+//return 0 when point is on axis
+//return 1 when point is outside
+int is_axis_base(float p1[3], float p2[3], xtStlMesh* stlmesh) {
+	
+	double closest_point1[3] = {};
+	double closest_point2[3] = {};
+	double vol1, vol2;
+	double d_p1[3];
+	double d_p2[3];
+	d_p1[0] = static_cast<double>(p1[0]);
+	d_p1[1] = static_cast<double>(p1[1]);
+	d_p1[2] = static_cast<double>(p1[2]);
+	d_p2[0] = static_cast<double>(p2[0]);
+	d_p2[1] = static_cast<double>(p2[1]);
+	d_p2[2] = static_cast<double>(p2[2]);
+	xt_point_distance2_to_stlmesh(d_p1, stlmesh, closest_point1, nullptr, &vol1);
+	xt_point_distance2_to_stlmesh(d_p2, stlmesh, closest_point2, nullptr, &vol2);
+	
+	if (vol1 > 0 || vol2 > 0) {
+		return 1;
+	}
+
+	double cos = for_cos(d_p1, closest_point1, d_p2, closest_point2);
+	if (cos < -0.95){
+		return 0;
+	}
+	else {
+		return -1;
+	}
+
+	return -1;
+}
+
+
 //the node n must be leaf node
 //to confirm whether the node satisfy that the node contain the axis of the model
-bool is_axis(Node* n, xtStlMesh* stlmesh) {
+int is_axis_single(Node* n, xtStlMesh* stlmesh) {
 	float points[3][2][3];
 	for (size_t i = 0; i < 3; i++) {
 		for (size_t j = 0; j < 2; j++) {
-			points[i][j][0] = n->points[0];
-			points[i][j][1] = n->points[1];
-			points[i][j][2] = n->points[2];
+			points[i][j][0] = n->points[0] + n->len / 2;
+			points[i][j][1] = n->points[1] + n->len / 2;
+			points[i][j][2] = n->points[2] + n->len / 2;
 		}
 	}
 	/*
@@ -1208,66 +1366,93 @@ bool is_axis(Node* n, xtStlMesh* stlmesh) {
 		points[i][1][i] += n->len / 2;
 	}
 
-	for (size_t i = 0; i < 3; i++) {
-		
+	if (is_axis_base(points[0][0], points[0][1], stlmesh) == 1) {
+		return 1;
+	}
+	if (is_axis_base(points[1][0], points[1][1], stlmesh) == 1) {
+		return 1;
+	}
+	if (is_axis_base(points[2][0], points[2][1], stlmesh) == 1) {
+		return 1;
+	}
+	
+	if (is_axis_base(points[0][0], points[0][1], stlmesh) == 0) {
+		return 0;
+	}
+	if (is_axis_base(points[1][0], points[1][1], stlmesh) == 0) {
+		return 0;
+	}
+	if (is_axis_base(points[2][0], points[2][1], stlmesh) == 0) {
+		return 0;
 	}
 
-	return false;
+	return -1;
 }
 
-bool is_axis_x(Node* back, Node* front, xtStlMesh* stlmesh) {
 
+int is_axis_neighboring(Node* n, xtStlMesh* stlmesh) {	
+	float point1[3], point2[6][3];
+	for (size_t i = 0; i < 3; i++) {
+		point1[i] = n->points[i] + n->len / 2;
+		for (size_t j = 0; j < 6; j++) {
+			point2[j][i] = point1[i];
+		}
+	}
+	point2[0][0] -= n->len;
+	point2[1][0] += n->len;
+	point2[2][1] -= n->len;
+	point2[3][1] += n->len;
+	point2[4][2] -= n->len;
+	point2[5][2] += n->len;
+
+	for (size_t i = 0; i < 6; i++) {
+		//the node must be in model, so result is 0 or -1, can't be 1.
+		if (is_axis_base(point1, point2[i], stlmesh) == 0) {
+			return 0;
+		}
+	}
+	return -1;
 }
 
-bool is_axis_y(Node* left, Node* right, xtStlMesh* stlmesh) {
-
-}
-
-bool is_axis_z(Node* lower, Node* upper, xtStlMesh* stlmesh) {
-
-}
-
-void queue_node(Node* n, std::queue<Node*>* q_ptr) {
+void find_leaf(Node* n, std::queue<Node*>& q) {
 	if (n == nullptr)
 		return;
 
 	if (n->child[0] == nullptr) {
-		q_ptr->push(n);
+		q.push(n);
 		return;
 	}
 
 	for (size_t i = 0; i < 8; i++) {
-		queue_node(n->child[i], q_ptr);
+		find_leaf(n->child[i], q);
 	}
 }
 
-void find_axis(Node* n) {
-	//TODO:
-	xtStlMesh* stlmesh;
-
-	std::queue<Node*> q;
-	queue_node(n, &q);
-
-	//the Node* satisfy the axis's condition
-	std::queue<Node*> axis;
-	//to be make sure according to its neighbor
-	//to be used caculating
+//cell contains all leaf nodes
+//axis whose Node* satisfy the axis's condition
+void find_axis(Node* root, std::queue<Node*>& cell, std::queue<Node*>& axis, xtStlMesh* stlmesh) {
 	std::queue<Node*> tmp;
 
 	//the single cell is on axis
-	while (!q.empty()) {
-		Node* t = q.front();
-		if (is_axis(t, stlmesh)) {
+	while (!cell.empty()) {
+		Node* t = cell.front();
+		if (is_axis_single(t, stlmesh)==0) {
 			axis.push(t);
 		}
-		else {
+		else if(is_axis_single(t, stlmesh) == -1){
 			tmp.push(t);
 		}
+		cell.pop();
 	}
 
 	//with the neighbor to be on axis
 	while (!tmp.empty()) {
-
+		Node* t = tmp.front();
+		if (is_axis_neighboring(t, stlmesh)==0)
+		{
+			axis.push(t);
+		}
+		tmp.pop();
 	}
 }
 
@@ -1277,14 +1462,14 @@ typedef struct {
 	float x;
 	float y;
 	float z;
-}Point;
+}Point3;
 
 typedef struct {
 	int numbering;
 	float distance;
 }Value;
 
-bool operator<(const Point& lhs, const Point& rhs) {
+bool operator<(const Point3& lhs, const Point3& rhs) {
 	if (lhs.x < rhs.x)
 		return false;
 	else if (lhs.x > rhs.x)
@@ -1301,22 +1486,16 @@ bool operator<(const Point& lhs, const Point& rhs) {
 	return false;
 }
 
-
-typedef std::vector<float> vec_point;
-typedef std::vector<int> vec_element;
-typedef std::map<Point, int> point_container;
-
-void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
-	if (pcontainer->find(p) != pcontainer->end()) {
-		pelement->push_back((*pcontainer)[p]);
+void insert_point_and_element(Point3& p, std::map<Point3, size_t>& container, std::vector<float>& point, std::vector<size_t>& element, xtStlMesh* stlmesh) {
+	if (container.find(p) != container.end()) {
+		element.push_back((container)[p]);
 	}
 	else {
-		int size = static_cast<int>(pcontainer->size());
-
-		(*pcontainer)[p] = size + 1;
-		ppoint->push_back(p.x);
-		ppoint->push_back(p.y);
-		ppoint->push_back(p.z);
+		size_t size = container.size();
+		container[p] = size + 1;
+		point.push_back(p.x);
+		point.push_back(p.y);
+		point.push_back(p.z);
 		//the distance come from bb_tree
 		double pt[3];
 		pt[0] = static_cast<double>(p.x);
@@ -1324,60 +1503,87 @@ void insert_point_and_element(Point& p, point_container* pcontainer, vec_point* 
 		pt[2] = static_cast<double>(p.z);
 		double dist = xt_stlmesh_isosurface(pt, stlmesh);
 		float dist1 = static_cast<float>(dist);
-		ppoint->push_back(dist1);
+		point.push_back(dist1);
 
-
-		pelement->push_back(size + 1);
+		element.push_back(size + 1);
 	}
 }
 
-void traverse(const Node* n, point_container* pcontainer, vec_point* ppoint, vec_element* pelement, xtStlMesh* stlmesh) {
+void insert_point_and_element(Node* n, std::map<Point3, size_t>& container, std::vector<float>& point, std::vector<size_t>& element, xtStlMesh* stlmesh) {
+	Point3 p;
+	//first point
+	p.x = n->points[0];
+	p.y = n->points[1];
+	p.z = n->points[2];
+	insert_point_and_element(p, container, point, element, stlmesh);
+	//second point,
+	p.x += n->len;//2
+	insert_point_and_element(p, container, point, element, stlmesh);
+	p.y += n->len;//3
+	insert_point_and_element(p, container, point, element, stlmesh);
+	p.x -= n->len;//4
+	insert_point_and_element(p, container, point, element, stlmesh);
+	p.y -= n->len;//5
+	p.z += n->len;
+	insert_point_and_element(p, container, point, element, stlmesh);
+	p.x += n->len;//6
+	insert_point_and_element(p, container, point, element, stlmesh);
+	p.y += n->len;//7
+	insert_point_and_element(p, container, point, element, stlmesh);
+	p.x -= n->len;//8
+	insert_point_and_element(p, container, point, element, stlmesh);
+
+	return;
+}
+
+/*
+void traverse(const Node* n, std::map<Point3, size_t>& container, std::vector<float>& point, std::vector<size_t>& element, xtStlMesh* stlmesh) {
 	if (n->child[0] == nullptr) {
-		Point p;
+		Point3 p;
 		//first point
 		p.x = n->points[0];
 		p.y = n->points[1];
 		p.z = n->points[2];
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 		//second point,
 		p.x += n->len;//2
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 		p.y += n->len;//3
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 		p.x -= n->len;//4
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 		p.y -= n->len;//5
 		p.z += n->len;
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 		p.x += n->len;//6
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 		p.y += n->len;//7
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 		p.x -= n->len;//8
-		insert_point_and_element(p, pcontainer, ppoint, pelement, stlmesh);
+		insert_point_and_element(p, container, point, element, stlmesh);
 
 		return;
 	}
-	traverse(n->child[0], pcontainer, ppoint, pelement, stlmesh);
-	traverse(n->child[1], pcontainer, ppoint, pelement, stlmesh);
-	traverse(n->child[2], pcontainer, ppoint, pelement, stlmesh);
-	traverse(n->child[3], pcontainer, ppoint, pelement, stlmesh);
-	traverse(n->child[4], pcontainer, ppoint, pelement, stlmesh);
-	traverse(n->child[5], pcontainer, ppoint, pelement, stlmesh);
-	traverse(n->child[6], pcontainer, ppoint, pelement, stlmesh);
-	traverse(n->child[7], pcontainer, ppoint, pelement, stlmesh);
+	traverse(n->child[0], container, point, element, stlmesh);
+	traverse(n->child[1], container, point, element, stlmesh);
+	traverse(n->child[2], container, point, element, stlmesh);
+	traverse(n->child[3], container, point, element, stlmesh);
+	traverse(n->child[4], container, point, element, stlmesh);
+	traverse(n->child[5], container, point, element, stlmesh);
+	traverse(n->child[6], container, point, element, stlmesh);
+	traverse(n->child[7], container, point, element, stlmesh);
 }
 
-void write_tecplot(char* filename1, char* filename2, const Node* n) {
-	FILE* fout = std::fopen(filename2, "w");
+void write_out(char* inputfile, char* outputfile, const Node* n) {
+	FILE* fout = std::fopen(outputfile, "w");
 	if (!fout)
-		std::printf("cann't creat file %s/n", filename2);
+		std::printf("cann't creat file %s/n", outputfile);
 
-	point_container container;
-	vec_point point;
-	vec_element element;
-	xtStlMesh* stlmesh = xt_stlmesh_simple_new_with_bbtree(filename1, 0);
-	traverse(n, &container, &point, &element, stlmesh);
+	std::map<Point3, size_t> container;
+	std::vector<float> point;
+	std::vector<size_t> element;
+	xtStlMesh* stlmesh = xt_stlmesh_simple_new_with_bbtree(inputfile, 0);
+	traverse(n, container, point, element, stlmesh);
 
 	xt_stlmesh_destroy(stlmesh);
 
@@ -1397,14 +1603,104 @@ void write_tecplot(char* filename1, char* filename2, const Node* n) {
 
 	std::fclose(fout);
 }
+*/
+
+void write_tecplot(FILE* fout, std::vector<float>& point, std::vector<size_t>& element) {
+	std::fprintf(fout, "TITLE=\"finite element grid\"\n");
+	std::fprintf(fout, "VARIABLES=\'X\', \'Y\', \'Z\', \'distance\'\n");
+	//std::fprintf(fout, "VARIABLES=\"X\", \"Y\", \"Z\", \"DISTANCE\" \n");
+	int number_of_point = static_cast<int>(point.size()) / 4;
+	int number_of_element = static_cast<int>(element.size()) / 8;
+	std::fprintf(fout, "ZONE N=%d E=%d F=FEPOINT, ET=BRICK\n", number_of_point, number_of_element);
+
+	for (int i = 0; i < number_of_point; i++) {
+		std::fprintf(fout, "%f %f %f %f\n", point[4 * i], point[4 * i + 1], point[4 * i + 2], point[4 * i + 3]);
+	}
+	for (int i = 0; i < number_of_element; i++) {
+		std::fprintf(fout, "%d %d %d %d %d %d %d %d\n", element[8 * i], element[8 * i + 1], element[8 * i + 2], element[8 * i + 3], element[8 * i + 4], element[8 * i + 5], element[8 * i + 6], element[8 * i + 7]);
+	}
+}
+
+void write_out(char* inputfile, char* outputfile, char* modelfile, char* axisfile, Node* n) {
+	std::map<Point3, size_t> leaf_container, axis_containter, model_containter;
+	std::vector<float> leaf_point, axis_point, model_point;
+	std::vector<size_t> leaf_element, axis_element, model_element;
+	xtStlMesh* stlmesh = xt_stlmesh_simple_new_with_bbtree(inputfile, 0);
+	
+	FILE* fout_leaf = std::fopen(outputfile, "w");
+	if (!fout_leaf)
+		std::printf("cann't open file %s/n", outputfile);
+	std::queue<Node*> q1, q2;
+	find_leaf(n, q1);
+	while (!q1.empty()) {
+		Node* t = q1.front();
+		q1.pop();
+		q2.push(t);
+		insert_point_and_element(t, leaf_container, leaf_point, leaf_element, stlmesh);
+	}
+	write_tecplot(fout_leaf, leaf_point, leaf_element);
+	/*
+	std::fprintf(fout_leaf, "TITLE=\"finite element grid\"\n");
+	std::fprintf(fout_leaf, "VARIABLES=\'X\', \'Y\', \'Z\', \'distance\'\n");
+	//std::fprintf(fout, "VARIABLES=\"X\", \"Y\", \"Z\", \"DISTANCE\" \n");
+	int number_of_point = static_cast<int>(leaf_point.size()) / 4;
+	int number_of_element = static_cast<int>(leaf_element.size()) / 8;
+	std::fprintf(fout_leaf, "ZONE N=%d E=%d F=FEPOINT, ET=BRICK\n", number_of_point, number_of_element);
+
+	for (int i = 0; i < number_of_point; i++) {
+		std::fprintf(fout_leaf, "%f %f %f %f\n", leaf_point[4 * i], leaf_point[4 * i + 1], leaf_point[4 * i + 2], leaf_point[4 * i + 3]);
+	}
+	for (int i = 0; i < number_of_element; i++) {
+		std::fprintf(fout_leaf, "%d %d %d %d %d %d %d %d\n", leaf_element[8 * i], leaf_element[8 * i + 1], leaf_element[8 * i + 2], leaf_element[8 * i + 3], leaf_element[8 * i + 4], leaf_element[8 * i + 5], leaf_element[8 * i + 6], leaf_element[8 * i + 7]);
+	}
+	*/
+
+	//write model
+	FILE* fout_model = std::fopen(modelfile, "w");
+	if (!fout_model)
+		std::printf("cann't open file %s/n", outputfile);
+	while (!q2.empty()) {
+		Node* t = q2.front();
+		q2.pop();
+
+		double point[3];
+		point[0] = static_cast<double>(t->points[0] + t->len / 2);
+		point[1] = static_cast<double>(t->points[1] + t->len / 2);
+		point[2] = static_cast<double>(t->points[2] + t->len / 2);
+		double dist = xt_stlmesh_isosurface(point, stlmesh);
+		if (dist < 0) {
+			q1.push(t);
+			insert_point_and_element(t, model_containter, model_point, model_element, stlmesh);
+		}
+	}
+	write_tecplot(fout_model, model_point, model_element);
+
+	//write axis
+	FILE* fout_axis = std::fopen(axisfile, "w");
+	if (!fout_axis)
+		std::printf("cann't open file %s/n", axisfile);
+	std::queue<Node*> axis;
+	find_axis(n, q1, axis, stlmesh);
+	while (!axis.empty()) {
+		Node* t = axis.front();
+		axis.pop();
+		insert_point_and_element(t, axis_containter, axis_point, axis_element, stlmesh);
+	}
+	write_tecplot(fout_axis, axis_point, axis_element);
+
+	xt_stlmesh_destroy(stlmesh);
+	std::fclose(fout_leaf);
+	std::fclose(fout_model);
+	std::fclose(fout_axis);
+}
 
 void free_tree(Node* n) {
 
 	//recursive
+	if (n == nullptr) {
+		return;
+	}
 	
-	if (n == nullptr)
-	return;
-
 	free_tree(n->child[0]);
 	free_tree(n->child[1]);
 	free_tree(n->child[2]);
@@ -1415,7 +1711,6 @@ void free_tree(Node* n) {
 	free_tree(n->child[7]);
 	delete n;
 	
-
 	//use a queue
 	/*
 	std::queue<Node*> q;
@@ -1437,10 +1732,10 @@ void free_tree(Node* n) {
 }
 
 
-void wrapper(char* argv1, char* argv2) {
+void wrapper(char* argv1, char* argv2, char* argv3, char* argv4) {
 	Size s;
 	std::vector<float> record;
-	read_stl(argv1, true, &record, &s);
+	read_stl(argv1, false, &record, &s);
 
 	//Node n;
 	Node* n = new Node;
@@ -1448,7 +1743,7 @@ void wrapper(char* argv1, char* argv2) {
 
 	smooth_tree(n);
 
-	write_tecplot(argv1, argv2, n);
+	write_out(argv1, argv2, argv3, argv4, n);
 
 	free_tree(n);
 
