@@ -46,11 +46,12 @@ void build_octree(Node* n, std::vector<float>* record, Size* s);
 
 void smooth_tree(Node* n);
 
-void write_tecplot(char* filename1, char* filename2, const Node* n);
+//void write_out(char* inputfile, char* outputfile, const Node* n);
+void write_out(char* inputfile, char* outputfile, char* modelfile, char* axisfile, char* testfile, Node* n);
 
 void free_tree(Node* n);
 
-void wrapper(char* argv1, char* argv2);
+void wrapper(char* argv1, char* argv2, char* argv3, char* argv4, char* argv5);
 
 
 

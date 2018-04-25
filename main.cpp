@@ -74,9 +74,10 @@ int main(int args, char* argv[])
 
 	//wrapper function for use of smart pointer
 	//call the 3 function
-	wrapper(argv[1], argv[2]);
 	
+	wrapper(argv[1], argv[2], argv[3], argv[4], argv[5]);
 	
 	_CrtDumpMemoryLeaks();
+
 	return 0;
 }

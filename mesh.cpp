@@ -1436,15 +1436,16 @@ void find_axis(Node* root, std::queue<Node*>& cell, std::queue<Node*>& axis, xtS
 	//the single cell is on axis
 	while (!cell.empty()) {
 		Node* t = cell.front();
-		if (is_axis_single(t, stlmesh)==0) {
+		int result = is_axis_single(t, stlmesh);
+		if (result == 0) { 
 			axis.push(t);
 		}
-		else if(is_axis_single(t, stlmesh) == -1){
+		else if(result == -1){
 			tmp.push(t);
 		}
 		cell.pop();
 	}
-
+	
 	//with the neighbor to be on axis
 	while (!tmp.empty()) {
 		Node* t = tmp.front();
@@ -1621,12 +1622,41 @@ void write_tecplot(FILE* fout, std::vector<float>& point, std::vector<size_t>& e
 	}
 }
 
-void write_out(char* inputfile, char* outputfile, char* modelfile, char* axisfile, Node* n) {
+void write_out(char* inputfile, char* outputfile, char* modelfile, char* axisfile, char* testfile, Node* n) {
 	std::map<Point3, size_t> leaf_container, axis_containter, model_containter;
 	std::vector<float> leaf_point, axis_point, model_point;
 	std::vector<size_t> leaf_element, axis_element, model_element;
 	xtStlMesh* stlmesh = xt_stlmesh_simple_new_with_bbtree(inputfile, 0);
 	
+	//for test xt_point_distance2_to_stlmesh()
+	//test part
+	//it proves that the function below can calculate the closest point on the model to given point
+	double close_pt[5][3] = {};
+	double pt[5][3] = { {300.0,0.0,250.0},{0.0,300.0,250.0},{-200.0,0.0,200.0},{0.0,-100.0,100.0},{-150.0,-150.0,100.0} };
+	xt_point_distance2_to_stlmesh(pt[0], stlmesh, close_pt[0], nullptr, nullptr);
+	xt_point_distance2_to_stlmesh(pt[1], stlmesh, close_pt[1], nullptr, nullptr);
+	xt_point_distance2_to_stlmesh(pt[2], stlmesh, close_pt[2], nullptr, nullptr);
+	xt_point_distance2_to_stlmesh(pt[3], stlmesh, close_pt[3], nullptr, nullptr);
+	xt_point_distance2_to_stlmesh(pt[4], stlmesh, close_pt[4], nullptr, nullptr);
+	for (int i = 0; i < 5; i++)
+		for (int j = 0; j < 3; j++)
+			printf("%g\n", close_pt[i][j]);
+
+	//test for ³Âº½
+	std::vector<float> chenP{ 0.0,0.0,0.0,0.0,
+		2.0,0.0,0.0,0.0,
+		2.0,2.0,0.0,0.0,
+		0.0,2.0,0.0,0.0,
+		0.0,0.0,2.0,0.0,
+		2.0,0.0,2.0,0.0,
+		2.0,2.0,2.0,0.0,
+		0.0,2.0,2.0,0.0
+	};
+	std::vector<size_t> chenE(1);
+	FILE* test = std::fopen(testfile, "w");
+	write_tecplot(test, chenP, chenE);
+	
+
 	FILE* fout_leaf = std::fopen(outputfile, "w");
 	if (!fout_leaf)
 		std::printf("cann't open file %s/n", outputfile);
@@ -1732,7 +1762,7 @@ void free_tree(Node* n) {
 }
 
 
-void wrapper(char* argv1, char* argv2, char* argv3, char* argv4) {
+void wrapper(char* argv1, char* argv2, char* argv3, char* argv4, char* argv5) {
 	Size s;
 	std::vector<float> record;
 	read_stl(argv1, false, &record, &s);
@@ -1743,7 +1773,7 @@ void wrapper(char* argv1, char* argv2, char* argv3, char* argv4) {
 
 	smooth_tree(n);
 
-	write_out(argv1, argv2, argv3, argv4, n);
+	write_out(argv1, argv2, argv3, argv4, argv5, n);
 
 	free_tree(n);
 
